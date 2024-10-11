@@ -9,6 +9,7 @@ type public TokenType =
     | Pow // power (^)
     | LPar // left parenthesis (
     | RPar // right parenthesis )
+    | Eq // assignment (=)
     | Var of string // variable
     | NumI of int64 // integer number
     | NumF of float // floating point number
