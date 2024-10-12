@@ -2,6 +2,7 @@ module public Plot.Core.Parser
 
 open System.Collections.Generic
 open Plot.Core
+open Plot.Core.Symbols
 
 // Grammar:
 // <Expr>        ::= <Term> <ExprOpt>
@@ -11,8 +12,6 @@ open Plot.Core
 // <Factor>      ::= <Base> <FactorOpt>
 // <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
 // <Base>        ::= "NumI" <value> | "NumF" <value> | "(" <Expr> ")"
-
-let symbolTable = Dictionary<string, float>()
 
 let Parse tokenList =
     let rec Expr tokenList = (Term >> ExprOpt) tokenList
@@ -43,50 +42,60 @@ let Parse tokenList =
 
     Expr tokenList
     
-let ParseAndEval tList = 
-    let rec Expr tList = (Term >> ExprOpt) tList
+let ParseAndEval tList =
+    let rec symbolTable = Dictionary<string, SymbolType>()
+
+    and Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) = 
         match tList with
-        | Add :: tail -> let (tLst, tVal) = Term tail
-                         ExprOpt (tLst, value + tVal)
-        | Sub :: tail -> let (tLst, tVal) = Term tail
-                         ExprOpt (tLst, value - tVal)
+        | TokenType.Add :: tail -> let (tLst, tVal) = Term tail
+                                   ExprOpt (tLst, addValues value tVal)
+        | TokenType.Sub :: tail -> let (tLst, tVal) = Term tail
+                                   ExprOpt (tLst, subValues value tVal)
         | _ -> (tList, value)
     and Term tList = (Factor >> TermOpt) tList
     and TermOpt (tList, value) =
         match tList with
-        | Mul :: tail -> let (tLst, tVal) = Factor tail
-                         TermOpt (tLst, value * tVal)
-        | Div :: tail -> let (tLst, tVal) = Factor tail
-                         TermOpt (tLst, value / tVal)
-        | Mod :: tail -> let (tLst, tVal) = Factor tail
-                         TermOpt (tLst, value % tVal)
+        | TokenType.Mul :: tail -> let (tLst, tVal) = Factor tail
+                                   TermOpt (tLst, mulValues value tVal)
+        | TokenType.Div :: tail -> let (tLst, tVal) = Factor tail
+                                   TermOpt (tLst, divValues value tVal)
+        | TokenType.Mod :: tail -> let (tLst, tVal) = Factor tail
+                                   TermOpt (tLst, modValues value tVal)
         | _ -> (tList, value)
     and Factor tList = (Base >> FactorOpt) tList
     and FactorOpt (tList, value) =
         match tList with
-        | Pow :: tail -> let (tLst, tVal) = Base tail
-                         FactorOpt (tLst, System.Math.Pow(value, tVal))
+        | TokenType.Pow :: tail -> let (tLst, tVal) = Base tail
+                                   FactorOpt (tLst, powValues value tVal)
         | _ -> (tList, value)
     and Base tList =
         match tList with
-        | NumI value :: tail -> (tail, value)
-        | NumF value :: tail -> (tail, value)
-        | Var name :: Eq :: tail -> // variable assignment
+        // inline symbol (not defined in the symbol table)
+        | TokenType.NumI value :: tail -> (tail, SymbolType.Int value)
+        | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
+
+        // variable assignment
+        | TokenType.Var name :: Eq :: tail ->
             let (remaining, result) = Expr tail
             symbolTable[name] <- result
             (remaining, result)
-        | Var name :: tail -> // variable lookup
+
+        // variable lookup
+        | TokenType.Var name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
             | _ -> failwith $"Variable \"{name}\" is not defined"
-        | LPar :: tail -> let (tLst, tVal) = Expr tail
-                          match tLst with 
-                          | RPar :: tail -> (tail, tVal)
-                          | _ -> failwith "Parser error"
+
+        // parenthesis
+        | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
+                                    match tLst with 
+                                    | TokenType.RPar :: tail -> (tail, tVal)
+                                    | _ -> failwith "Parser error"
+
         | _ -> failwith "Parser error"
 
-    let rec ParseStatements tList =
+    and ParseStatements tList =
         match tList with
         | [] -> ()
         | TokenType.NewLine :: tail -> ParseStatements tail
