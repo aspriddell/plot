@@ -11,5 +11,5 @@ type public TokenType =
     | RPar // right parenthesis )
     | Eq // assignment (=)
     | Var of string // variable
-    | NumI of int64 // integer number
+    | NumI of int // integer number
     | NumF of float // floating point number
