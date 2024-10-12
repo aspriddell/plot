@@ -11,7 +11,9 @@ open Plot.Core.Symbols
 // <TermOpt>     ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
 // <Factor>      ::= <Base> <FactorOpt>
 // <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
-// <Base>        ::= "NumI" <value> | "NumF" <value> | "(" <Expr> ")"
+// <Base>        ::= <Number> | <Identifier> "=" <Expr> | <Identifier> | "(" <Expr> ")"
+// <Number>      ::= "NumI" <value> | "NumF" <value>
+// <Variable>    ::= "Var" <name>
 
 let Parse tokenList =
     let rec Expr tokenList = (Term >> ExprOpt) tokenList
