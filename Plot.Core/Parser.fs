@@ -35,6 +35,9 @@ let Parse tokenList =
     and Base tokenList =
         match tokenList with
         | TokenType.NumI _ :: tail -> tail
+        | TokenType.NumF _ :: tail -> tail
+        | TokenType.Var _ :: Eq :: tail -> (Expr >> Base) tail
+        | TokenType.Var _ :: tail -> tail
         | TokenType.LPar :: tail -> match Expr tail with
                                     | TokenType.RPar :: tail -> tail
                                     | _ -> failwith "Parser error"
