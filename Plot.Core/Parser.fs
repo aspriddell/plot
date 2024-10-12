@@ -32,7 +32,7 @@ let Parse tokenList =
         | _ -> tokenList
     and Base tokenList =
         match tokenList with
-        | TokenType.NumI value :: tail -> tail
+        | TokenType.NumI _ :: tail -> tail
         | TokenType.LPar :: tail -> match Expr tail with
                                     | TokenType.RPar :: tail -> tail
                                     | _ -> failwith "Parser error"
@@ -75,5 +75,15 @@ let ParseAndEval tList =
                           | _ -> failwith "Parser error"
         | _ -> failwith "Parser error"
 
-    Expr tList
+    let rec ParseStatements tList =
+        match tList with
+        | [] -> ()
+        | TokenType.NewLine :: tail -> ParseStatements tail
+        | _ ->
+            let remaining, result = Expr tList
+            // Print properly formatted numbers (whole numbers without tailing zeros and floats with appropriate precision) 
+            printfn $"%s{result.ToString()}"
+            ParseStatements remaining
+
+    ParseStatements tList
     

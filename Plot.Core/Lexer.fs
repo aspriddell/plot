@@ -7,24 +7,24 @@ open Plot.Core
 /// </summary>
 /// <returns>The parsed value and the unconsumed string.</returns>
 /// <remarks>This is based on the example, with adjustments to handle floating point</remarks>
-let rec private scanNumber(inputStr, inputValue, isFloating, divisor) =
+let rec private scanNumber (inputStr, inputValue, isFloating, divisor) =
     match inputStr with
-    c :: tail when System.Char.IsDigit c ->
+    | c :: tail when System.Char.IsDigit c ->
         let digit = System.Char.GetNumericValue c
 
         if isFloating then
             // scanning left-to-right results in the divisor growing by a factor of 10 each time
-            scanNumber(tail, inputValue + digit / divisor, isFloating, divisor * 10.0)
+            scanNumber (tail, inputValue + digit / divisor, isFloating, divisor * 10.0)
         else
             // reuse the existing integer logic
-            scanNumber(tail, inputValue * 10.0 + digit, isFloating, 1.0)
+            scanNumber (tail, inputValue * 10.0 + digit, isFloating, 1.0)
 
     // after detecting the decimal point, switch to floating point mode
-    | '.' :: tail when not isFloating -> scanNumber(tail, inputValue, true, 10.0)
-    
+    | '.' :: tail when not isFloating -> scanNumber (tail, inputValue, true, 10.0)
+
     // don't allow multiple decimal points
     | '.' :: _ -> failwith "Unexpected decimal point"
-    
+
     // done
     | _ -> (inputStr, inputValue, isFloating)
 
@@ -34,6 +34,7 @@ let rec private scanNumber(inputStr, inputValue, isFloating, divisor) =
 let rec private scan input =
     match input with
     | [] -> []
+    | '\n' :: tail -> TokenType.NewLine :: scan tail
     | '+' :: tail -> TokenType.Add :: scan tail
     | '-' :: tail -> TokenType.Sub :: scan tail
     | '*' :: tail -> TokenType.Mul :: scan tail
@@ -44,14 +45,17 @@ let rec private scan input =
     | ')' :: tail -> TokenType.RPar :: scan tail
     | '=' :: tail -> TokenType.Eq :: scan tail
     | c :: tail when System.Char.IsWhiteSpace c -> scan tail
-    
+
     // if it's a digit, determine if it's an integer or floating point value.
-    | c :: tail when System.Char.IsDigit c -> let (outStr, outVal, isFloating) = scanNumber(tail, System.Char.GetNumericValue c, false, 1.0) 
-                                              if isFloating
-                                              then NumF outVal :: scan outStr
-                                              else NumI (int outVal) :: scan outStr
+    | c :: tail when System.Char.IsDigit c ->
+        let (outStr, outVal, isFloating) =
+            scanNumber (tail, System.Char.GetNumericValue c, false, 1.0)
+
+        if isFloating then
+            NumF outVal :: scan outStr
+        else
+            NumI(int outVal) :: scan outStr
 
     | _ -> failwith "Lexer error"
 
-let public Parse input =
-    scan (input |> List.ofArray)
+let public Parse input = scan (input |> List.ofArray)

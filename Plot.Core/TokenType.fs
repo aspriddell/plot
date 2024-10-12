@@ -1,11 +1,12 @@
 namespace Plot.Core
 
 type public TokenType = 
+    | NewLine // newline (\n)
     | Add // add (+)
     | Sub // subtract (-)
     | Mul // multiply (*)
     | Div // divide (/)
-    | Mod // moudlo (%)
+    | Mod // modulo (%)
     | Pow // power (^)
     | LPar // left parenthesis (
     | RPar // right parenthesis )
