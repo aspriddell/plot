@@ -28,6 +28,12 @@ let rec private scanNumber (inputStr, inputValue, isFloating, divisor) =
     // done
     | _ -> (inputStr, inputValue, isFloating)
 
+// Scan variables, a string of characters starting with a letter
+let rec private scanVar (inputStr, currentVar) =
+    match inputStr with
+    | c :: tail when System.Char.IsLetterOrDigit c -> scanVar (tail, currentVar + string c)
+    | _ -> (inputStr, currentVar)
+
 /// <summary>
 /// Performs lexical analysis on the input string, returning a list of tokens.
 /// </summary>
@@ -55,6 +61,11 @@ let rec private scan input =
             NumF outVal :: scan outStr
         else
             NumI(int outVal) :: scan outStr
+
+    // variables start with a letter
+    | c :: tail when System.Char.IsLetter c ->
+        let (remaining, varName) = scanVar (tail, string c)
+        TokenType.Var varName :: scan remaining
 
     | _ -> failwith "Lexer error"
 

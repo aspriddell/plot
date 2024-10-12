@@ -1,5 +1,6 @@
 module public Plot.Core.Parser
 
+open System.Collections.Generic
 open Plot.Core
 
 // Grammar:
@@ -10,6 +11,8 @@ open Plot.Core
 // <Factor>      ::= <Base> <FactorOpt>
 // <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
 // <Base>        ::= "NumI" <value> | "NumF" <value> | "(" <Expr> ")"
+
+let symbolTable = Dictionary<string, float>()
 
 let Parse tokenList =
     let rec Expr tokenList = (Term >> ExprOpt) tokenList
@@ -44,34 +47,42 @@ let ParseAndEval tList =
     let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) = 
         match tList with
-        | Add :: tail -> let (tLst, tval) = Term tail
-                         ExprOpt (tLst, value + tval)
-        | Sub :: tail -> let (tLst, tval) = Term tail
-                         ExprOpt (tLst, value - tval)
+        | Add :: tail -> let (tLst, tVal) = Term tail
+                         ExprOpt (tLst, value + tVal)
+        | Sub :: tail -> let (tLst, tVal) = Term tail
+                         ExprOpt (tLst, value - tVal)
         | _ -> (tList, value)
     and Term tList = (Factor >> TermOpt) tList
     and TermOpt (tList, value) =
         match tList with
-        | Mul :: tail -> let (tLst, tval) = Factor tail
-                         TermOpt (tLst, value * tval)
-        | Div :: tail -> let (tLst, tval) = Factor tail
-                         TermOpt (tLst, value / tval)
-        | Mod :: tail -> let (tLst, tval) = Factor tail
-                         TermOpt (tLst, value % tval)
+        | Mul :: tail -> let (tLst, tVal) = Factor tail
+                         TermOpt (tLst, value * tVal)
+        | Div :: tail -> let (tLst, tVal) = Factor tail
+                         TermOpt (tLst, value / tVal)
+        | Mod :: tail -> let (tLst, tVal) = Factor tail
+                         TermOpt (tLst, value % tVal)
         | _ -> (tList, value)
     and Factor tList = (Base >> FactorOpt) tList
     and FactorOpt (tList, value) =
         match tList with
-        | Pow :: tail -> let (tLst, tval) = Base tail
-                         FactorOpt (tLst, System.Math.Pow(value, tval))
+        | Pow :: tail -> let (tLst, tVal) = Base tail
+                         FactorOpt (tLst, System.Math.Pow(value, tVal))
         | _ -> (tList, value)
     and Base tList =
-        match tList with 
+        match tList with
         | NumI value :: tail -> (tail, value)
         | NumF value :: tail -> (tail, value)
-        | LPar :: tail -> let (tLst, tval) = Expr tail
+        | Var name :: Eq :: tail -> // variable assignment
+            let (remaining, result) = Expr tail
+            symbolTable[name] <- result
+            (remaining, result)
+        | Var name :: tail -> // variable lookup
+            match symbolTable.TryGetValue(name) with
+            | true, value -> (tail, value)
+            | _ -> failwith $"Variable \"{name}\" is not defined"
+        | LPar :: tail -> let (tLst, tVal) = Expr tail
                           match tLst with 
-                          | RPar :: tail -> (tail, tval)
+                          | RPar :: tail -> (tail, tVal)
                           | _ -> failwith "Parser error"
         | _ -> failwith "Parser error"
 
