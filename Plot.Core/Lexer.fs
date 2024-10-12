@@ -1,5 +1,6 @@
 ﻿module public Plot.Core.Lexer
 
+open System
 open Plot.Core
 
 /// <summary>
@@ -9,8 +10,8 @@ open Plot.Core
 /// <remarks>This is based on the example, with adjustments to handle floating point</remarks>
 let rec private scanNumber (inputStr, inputValue, isFloating, divisor) =
     match inputStr with
-    | c :: tail when System.Char.IsDigit c ->
-        let digit = System.Char.GetNumericValue c
+    | c :: tail when Char.IsDigit c ->
+        let digit = Char.GetNumericValue c
 
         if isFloating then
             // scanning left-to-right results in the divisor growing by a factor of 10 each time
@@ -31,7 +32,7 @@ let rec private scanNumber (inputStr, inputValue, isFloating, divisor) =
 // Scan variables, a string of characters starting with a letter
 let rec private scanVar (inputStr, currentVar) =
     match inputStr with
-    | c :: tail when System.Char.IsLetterOrDigit c -> scanVar (tail, currentVar + string c)
+    | c :: tail when Char.IsLetterOrDigit c -> scanVar (tail, currentVar + string c)
     | _ -> (inputStr, currentVar)
 
 /// <summary>
@@ -50,12 +51,12 @@ let rec private scan input =
     | '(' :: tail -> TokenType.LPar :: scan tail
     | ')' :: tail -> TokenType.RPar :: scan tail
     | '=' :: tail -> TokenType.Eq :: scan tail
-    | c :: tail when System.Char.IsWhiteSpace c -> scan tail
+    | c :: tail when Char.IsWhiteSpace c -> scan tail
 
     // if it's a digit, determine if it's an integer or floating point value.
-    | c :: tail when System.Char.IsDigit c ->
+    | c :: tail when Char.IsDigit c ->
         let (outStr, outVal, isFloating) =
-            scanNumber (tail, System.Char.GetNumericValue c, false, 1.0)
+            scanNumber (tail, Char.GetNumericValue c, false, 1.0)
 
         if isFloating then
             NumF outVal :: scan outStr
@@ -63,7 +64,7 @@ let rec private scan input =
             NumI(int outVal) :: scan outStr
 
     // variables start with a letter
-    | c :: tail when System.Char.IsLetter c ->
+    | c :: tail when Char.IsLetter c ->
         let (remaining, varName) = scanVar (tail, string c)
         TokenType.Var varName :: scan remaining
 
