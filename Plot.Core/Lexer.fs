@@ -49,7 +49,7 @@ let rec private scan input =
     | c :: tail when System.Char.IsDigit c -> let (outStr, outVal, isFloating) = scanNumber(tail, System.Char.GetNumericValue c, false, 1.0) 
                                               if isFloating
                                               then NumF outVal :: scan outStr
-                                              else NumI (int64 outVal) :: scan outStr
+                                              else NumI (int outVal) :: scan outStr
 
     | _ -> failwith "Lexer error"
 
