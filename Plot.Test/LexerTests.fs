@@ -1,4 +1,3 @@
-
 module Plot.Test.LexerTests
 
 open System
@@ -25,4 +24,3 @@ let TestLexerParsing (input: string, tree: TokenType list): unit =
 [<TestCase("10.10.10", typedefof<InvalidNumberFormatException>)>]
 let TestInvalidSyntaxHandling(input: string, expectedError: Type): unit =
     Assert.Throws(expectedError, fun () -> Parse input |> ignore) |> ignore
-

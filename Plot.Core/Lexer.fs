@@ -73,4 +73,7 @@ let rec private scan input =
 
     | _ -> raise (LexerException "Unexpected character")
 
+/// <summary>
+/// Parses a string into a list of <see cref="TokenType"/> values, throwing an exception if the input is invalid.
+/// </summary>
 let public Parse (input: string): TokenType list = scan (input |> List.ofSeq)
