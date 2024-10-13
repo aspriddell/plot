@@ -1,8 +1,10 @@
 
 module Plot.Test.LexerTests
 
+open System
 open NUnit.Framework
 open Plot.Core
+open Plot.Core.Lexer
 
 let LexerTestCases: TestCaseData list =
     [
@@ -14,7 +16,13 @@ let LexerTestCases: TestCaseData list =
     ]
 
 [<TestCaseSource(nameof LexerTestCases)>]
-let TestLexerParsing (input: string, tree: TokenType list) =
-    let tokens = Lexer.Parse input
+let TestLexerParsing (input: string, tree: TokenType list): unit =
+    let tokens = Parse input
     for token1, token2 in List.zip tokens tree do
         Assert.AreEqual(token1, token2)
+
+[<TestCase("10 . 10", typedefof<LexerException>)>]
+[<TestCase("10.10.10", typedefof<InvalidNumberFormatException>)>]
+let TestInvalidSyntaxHandling(input: string, expectedError: Type): unit =
+    Assert.Throws(expectedError, fun () -> Parse input |> ignore) |> ignore
+

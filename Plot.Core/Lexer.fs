@@ -3,6 +3,9 @@
 open System
 open Plot.Core
 
+exception LexerException of message: string
+exception InvalidNumberFormatException of message: string
+
 /// <summary>
 /// Takes a sequence of chars and returns the parsed number from the start of the string.
 /// </summary>
@@ -24,7 +27,7 @@ let rec private scanNumber (inputStr, inputValue, isFloating, divisor) =
     | '.' :: tail when not isFloating -> scanNumber (tail, inputValue, true, 10.0)
 
     // don't allow multiple decimal points
-    | '.' :: _ -> failwith "Unexpected decimal point"
+    | '.' :: _ -> raise (InvalidNumberFormatException "Multiple decimal points")
 
     // done
     | _ -> (inputStr, inputValue, isFloating)
@@ -68,6 +71,6 @@ let rec private scan input =
         let (remaining, varName) = scanVar (tail, string c)
         TokenType.Var varName :: scan remaining
 
-    | _ -> failwith "Lexer error"
+    | _ -> raise (LexerException "Unexpected character")
 
 let public Parse (input: string): TokenType list = scan (input |> List.ofSeq)
