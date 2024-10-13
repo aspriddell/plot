@@ -1,10 +1,15 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
              x:Class="Plot.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
+             RequestedThemeVariant="Default" Name="Plot">
     <Application.Styles>
-        <FluentTheme />
+        <styling:FluentAvaloniaTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
     </Application.Styles>
+    <Application.Resources>
+        <ResourceDictionary>
+            <FontFamily x:Key="JetBrainsMono">avares://Plot/Assets/JetBrainsMono-Regular.ttf#JetBrains Mono</FontFamily>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>
