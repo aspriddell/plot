@@ -4,8 +4,8 @@ open System.Collections.Generic
 open Plot.Core
 open Plot.Core.Symbols
 
-exception ParserError of string
-exception VariableError of string
+exception ParserError of message: string
+exception VariableError of message: string * varName: string
 
 // Grammar:
 // <Expr>        ::= <Term> <ExprOpt>
@@ -94,7 +94,7 @@ let ParseAndEval tList =
         | TokenType.Var name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
-            | _ -> raise (VariableError $"\"{name}\" is not defined")
+            | _ -> raise (VariableError($"\"{name}\" is not defined", name))
 
         // parenthesis
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
