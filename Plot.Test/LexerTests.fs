@@ -7,6 +7,7 @@ open Plot.Core.Lexer
 
 let LexerTestCases: TestCaseData list =
     [
+      TestCaseData("5001", [ NumI(5001) ])
       TestCaseData("10 * 10", [ NumI(10); Mul; NumI(10) ])
       TestCaseData("10 / 3", [ NumI(10); Div; NumI(3) ])
       TestCaseData("10 / 3.0", [ NumI(10); Div; NumF(3) ])
