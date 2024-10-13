@@ -50,8 +50,8 @@ let Parse tokenList =
         | _ -> raise (ParserError "Parser error")
 
     Expr tokenList
-    
-let ParseAndEval tList =
+
+let public ParseAndEval(tList: TokenType list): SymbolType seq =
     let rec symbolTable = Dictionary<string, SymbolType>()
 
     and Expr tList = (Term >> ExprOpt) tList
@@ -105,14 +105,16 @@ let ParseAndEval tList =
         | _ -> raise (ParserError "Parser error")
 
     and ParseStatements tList =
-        match tList with
-        | [] -> ()
-        | TokenType.NewLine :: tail -> ParseStatements tail
-        | _ ->
-            let remaining, result = Expr tList
-            // Print properly formatted numbers (whole numbers without tailing zeros and floats with appropriate precision) 
-            printfn $"%s{result.ToString()}"
-            ParseStatements remaining
+        seq {
+            match tList with
+            | [] -> ()
+            | TokenType.NewLine :: tail -> yield! ParseStatements tail
+            | _ ->
+                let remaining, result = Expr tList
+
+                yield result
+                yield! ParseStatements remaining
+        }
 
     ParseStatements tList
     
