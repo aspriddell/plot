@@ -10,7 +10,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Plot.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Plot" Width="800" Height="600" MinWidth="500" MinHeight="300">
+        Title="Plot" Width="1200" Height="600" MinWidth="500" MinHeight="300">
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="_File">
