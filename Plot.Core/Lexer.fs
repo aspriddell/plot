@@ -3,8 +3,11 @@
 open System
 open Plot.Core
 
-exception LexerException of message: string
-exception InvalidNumberFormatException of message: string
+type LexerException (message: string) =
+    inherit Exception(message)
+    
+type InvalidNumberFormatException (message: string) =
+    inherit LexerException(message)
 
 /// <summary>
 /// Takes a sequence of chars and returns the parsed number from the start of the string.
