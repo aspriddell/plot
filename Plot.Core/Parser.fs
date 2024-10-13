@@ -4,6 +4,9 @@ open System.Collections.Generic
 open Plot.Core
 open Plot.Core.Symbols
 
+exception ParserError of string
+exception VariableError of string
+
 // Grammar:
 // <Expr>        ::= <Term> <ExprOpt>
 // <ExprOpt>     ::= "+" <Term> <ExprOpt> | "-" <Term> <ExprOpt> | <empty>
@@ -42,8 +45,9 @@ let Parse tokenList =
         | TokenType.Var _ :: tail -> tail
         | TokenType.LPar :: tail -> match Expr tail with
                                     | TokenType.RPar :: tail -> tail
-                                    | _ -> failwith "Parser error"
-        | _ -> failwith "Parser error"
+                                    | _ -> raise (ParserError "One or more set of parenthesis were not closed.")
+
+        | _ -> raise (ParserError "Parser error")
 
     Expr tokenList
     
@@ -54,25 +58,25 @@ let ParseAndEval tList =
     and ExprOpt (tList, value) = 
         match tList with
         | TokenType.Add :: tail -> let (tLst, tVal) = Term tail
-                                   ExprOpt (tLst, addValues value tVal)
+                                   ExprOpt (tLst, addValues(value, tVal))
         | TokenType.Sub :: tail -> let (tLst, tVal) = Term tail
-                                   ExprOpt (tLst, subValues value tVal)
+                                   ExprOpt (tLst, subValues(value, tVal))
         | _ -> (tList, value)
     and Term tList = (Factor >> TermOpt) tList
     and TermOpt (tList, value) =
         match tList with
         | TokenType.Mul :: tail -> let (tLst, tVal) = Factor tail
-                                   TermOpt (tLst, mulValues value tVal)
+                                   TermOpt (tLst, mulValues(value, tVal))
         | TokenType.Div :: tail -> let (tLst, tVal) = Factor tail
-                                   TermOpt (tLst, divValues value tVal)
+                                   TermOpt (tLst, divValues(value, tVal))
         | TokenType.Mod :: tail -> let (tLst, tVal) = Factor tail
-                                   TermOpt (tLst, modValues value tVal)
+                                   TermOpt (tLst, modValues(value, tVal))
         | _ -> (tList, value)
     and Factor tList = (Base >> FactorOpt) tList
     and FactorOpt (tList, value) =
         match tList with
         | TokenType.Pow :: tail -> let (tLst, tVal) = Base tail
-                                   FactorOpt (tLst, powValues value tVal)
+                                   FactorOpt (tLst, powValues(value, tVal))
         | _ -> (tList, value)
     and Base tList =
         match tList with
@@ -90,15 +94,15 @@ let ParseAndEval tList =
         | TokenType.Var name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
-            | _ -> failwith $"Variable \"{name}\" is not defined"
+            | _ -> raise (VariableError $"\"{name}\" is not defined")
 
         // parenthesis
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
                                     match tLst with 
                                     | TokenType.RPar :: tail -> (tail, tVal)
-                                    | _ -> failwith "Parser error"
+                                    | _ -> raise (ParserError "One or more set of parenthesis were not closed.")
 
-        | _ -> failwith "Parser error"
+        | _ -> raise (ParserError "Parser error")
 
     and ParseStatements tList =
         match tList with
