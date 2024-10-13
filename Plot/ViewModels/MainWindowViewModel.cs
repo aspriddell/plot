@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Windows.Input;
 using AvaloniaEdit.Document;
-using Microsoft.FSharp.Collections;
 using Plot.Core;
 using ReactiveUI;
 

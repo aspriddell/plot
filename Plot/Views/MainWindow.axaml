@@ -15,13 +15,13 @@
         <NativeMenu>
             <NativeMenuItem Header="_File">
                 <NativeMenu>
-                    <NativeMenuItem Header="_Open"/>
-                    <NativeMenuItem Header="_Save"/>
+                    <NativeMenuItem Header="_Open" Gesture="{OnPlatform Ctrl+O, macOS=Cmd+O}"/>
+                    <NativeMenuItem Header="_Save" Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}"/>
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="_Run">
                 <NativeMenu>
-                    <NativeMenuItem Header="Execute Script" Command="{Binding ExecuteSource}"/>
+                    <NativeMenuItem Header="Execute Script" Command="{Binding ExecuteSource}" Gesture="{OnPlatform Cmd+Enter, macOS=Cmd+Enter}"/>
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="_Output">
@@ -29,7 +29,7 @@
                     <NativeMenuItem Header="Copy Output"/>
                     <NativeMenuItem Header="Save Output"/>
                     <NativeMenuItemSeparator/>
-                    <NativeMenuItem Header="Clear Output" Command="{Binding ClearOutput}"/>
+                    <NativeMenuItem Header="Clear Output" Command="{Binding ClearOutput}" Gesture="{OnPlatform Ctrl+Alt+Back, macOS=Cmd+Alt+Back}"/>
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
@@ -48,7 +48,7 @@
             </ExperimentalAcrylicBorder>
 
             <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="5" Margin="20,0,0,0">
+                <StackPanel DockPanel.Dock="{OnPlatform Bottom, Windows=Top}" Orientation="Horizontal" Spacing="5" Margin="{OnPlatform 10, Windows='20,0,0,0'}">
                     <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{x:Static plot:App.Name}"/>
                     <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" Content="{x:Static plot:App.Version}"/>
 
