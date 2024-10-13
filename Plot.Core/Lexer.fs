@@ -70,4 +70,4 @@ let rec private scan input =
 
     | _ -> failwith "Lexer error"
 
-let public Parse input = scan (input |> List.ofArray)
+let public Parse (input: string): TokenType list = scan (input |> List.ofSeq)
