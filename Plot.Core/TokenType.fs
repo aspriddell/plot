@@ -1,6 +1,6 @@
 namespace Plot.Core
 
-type public TokenType = 
+type public TokenType =
     | NewLine // newline (\n)
     | Add // add (+)
     | Sub // subtract (-)

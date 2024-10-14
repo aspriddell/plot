@@ -48,7 +48,7 @@ let Parse tokenList =
         | TokenType.Var _ :: tail -> tail
         | TokenType.LPar :: tail -> match Expr tail with
                                     | TokenType.RPar :: tail -> tail
-                                    | _ -> raise (ParserError "One or more set of parenthesis were not closed.")
+                                    | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
 
@@ -98,7 +98,7 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         | TokenType.LPar :: tail -> let (tLst, tVal, _) = Expr tail
                                     match tLst with
                                     | TokenType.RPar :: tail -> (tail, tVal, false)
-                                    | _ -> raise (ParserError "One or more set of parenthesis were not closed.")
+                                    | _ -> raise (ParserError "One or more set of parentheses were not closed.")
         | _ -> raise (ParserError "Parser error")
 
     and ParseStatements tList =

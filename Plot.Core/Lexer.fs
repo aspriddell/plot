@@ -3,10 +3,10 @@
 open System
 open Plot.Core
 
-type LexerException (message: string) =
+type LexerException(message: string) =
     inherit Exception(message)
-    
-type InvalidNumberFormatException (message: string) =
+
+type InvalidNumberFormatException(message: string) =
     inherit LexerException(message)
 
 /// <summary>
@@ -81,4 +81,4 @@ let rec private scan input =
 /// <summary>
 /// Parses a string into a list of <see cref="TokenType"/> values, throwing an exception if the input is invalid.
 /// </summary>
-let public Parse (input: string): TokenType list = input |> List.ofSeq |> scan
+let public Parse (input: string) : TokenType list = input |> List.ofSeq |> scan
