@@ -56,58 +56,49 @@ let Parse tokenList =
 
 let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
-    and ExprOpt (tList, value) = 
+    and ExprOpt (tList, value, isAssignment) =
         match tList with
-        | TokenType.Add :: tail -> let (tLst, tVal) = Term tail
-                                   ExprOpt (tLst, addValues(value, tVal))
-        | TokenType.Sub :: tail -> let (tLst, tVal) = Term tail
-                                   ExprOpt (tLst, subValues(value, tVal))
-        | _ -> (tList, value)
+        | TokenType.Add :: tail -> let (tLst, tVal, _) = Term tail
+                                   ExprOpt (tLst, addValues(value, tVal), isAssignment)
+        | TokenType.Sub :: tail -> let (tLst, tVal, _) = Term tail
+                                   ExprOpt (tLst, subValues(value, tVal), isAssignment)
+        | _ -> (tList, value, isAssignment)
     and Term tList = (Factor >> TermOpt) tList
-    and TermOpt (tList, value) =
+    and TermOpt (tList, value, isAssignment) =
         match tList with
-        | TokenType.Mul :: tail -> let (tLst, tVal) = Factor tail
-                                   TermOpt (tLst, mulValues(value, tVal))
-        | TokenType.Div :: tail -> let (tLst, tVal) = Factor tail
-                                   TermOpt (tLst, divValues(value, tVal))
-        | TokenType.Mod :: tail -> let (tLst, tVal) = Factor tail
-                                   TermOpt (tLst, modValues(value, tVal))
-        | _ -> (tList, value)
+        | TokenType.Mul :: tail -> let (tLst, tVal, _) = Factor tail
+                                   TermOpt (tLst, mulValues(value, tVal), isAssignment)
+        | TokenType.Div :: tail -> let (tLst, tVal, _) = Factor tail
+                                   TermOpt (tLst, divValues(value, tVal), isAssignment)
+        | TokenType.Mod :: tail -> let (tLst, tVal, _) = Factor tail
+                                   TermOpt (tLst, modValues(value, tVal), isAssignment)
+        | _ -> (tList, value, isAssignment)
     and Factor tList =
         match tList with
-        // negative numbers (unary operator) is the same as subtracting from 0
-        | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
-                                   FactorOpt (tLst, subValues(SymbolType.Int 0, tVal))
+        | TokenType.Sub :: tail -> let (tLst, tVal, _) = Base tail
+                                   FactorOpt (tLst, subValues(SymbolType.Int 0, tVal), false)
         | _ -> (Base >> FactorOpt) tList
-    and FactorOpt (tList, value) =
+    and FactorOpt (tList, value, isAssignment) =
         match tList with
-        | TokenType.Pow :: tail -> let (tLst, tVal) = Base tail
-                                   FactorOpt (tLst, powValues(value, tVal))
-        | _ -> (tList, value)
+        | TokenType.Pow :: tail -> let (tLst, tVal, _) = Base tail
+                                   FactorOpt (tLst, powValues(value, tVal), isAssignment)
+        | _ -> (tList, value, isAssignment)
     and Base tList =
         match tList with
-        // inline symbol (not defined in the symbol table)
-        | TokenType.NumI value :: tail -> (tail, SymbolType.Int value)
-        | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
-
-        // variable assignment
+        | TokenType.NumI value :: tail -> (tail, SymbolType.Int value, false)
+        | TokenType.NumF value :: tail -> (tail, SymbolType.Float value, false)
         | TokenType.Var name :: Eq :: tail ->
-            let (remaining, result) = Expr tail
+            let (remaining, result, _) = Expr tail
             symbolTable[name] <- result
-            (remaining, result)
-
-        // variable lookup
+            (remaining, result, true)
         | TokenType.Var name :: tail ->
             match symbolTable.TryGetValue(name) with
-            | true, value -> (tail, value)
+            | true, value -> (tail, value, false)
             | _ -> raise (VariableError($"\"{name}\" is not defined", name))
-
-        // parenthesis
-        | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
-                                    match tLst with 
-                                    | TokenType.RPar :: tail -> (tail, tVal)
+        | TokenType.LPar :: tail -> let (tLst, tVal, _) = Expr tail
+                                    match tLst with
+                                    | TokenType.RPar :: tail -> (tail, tVal, false)
                                     | _ -> raise (ParserError "One or more set of parenthesis were not closed.")
-
         | _ -> raise (ParserError "Parser error")
 
     and ParseStatements tList =
@@ -116,9 +107,10 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
             | [] -> ()
             | TokenType.NewLine :: tail -> yield! ParseStatements tail
             | _ ->
-                let remaining, result = Expr tList
+                let remaining, result, isAssignment = Expr tList
+                if not isAssignment then
+                    yield result
 
-                yield result
                 yield! ParseStatements remaining
         }
 
