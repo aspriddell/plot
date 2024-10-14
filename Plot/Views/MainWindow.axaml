@@ -30,7 +30,7 @@
                     <NativeMenuItem Header="Copy Output"/>
                     <NativeMenuItem Header="Save Output"/>
                     <NativeMenuItemSeparator/>
-                    <NativeMenuItem Header="Clear Output" Command="{Binding ClearOutput}" Gesture="{OnPlatform Ctrl+Alt+Back, macOS=Cmd+Alt+Back}"/>
+                    <NativeMenuItem Header="Clear Output" Command="{Binding ClearOutput}" Gesture="{OnPlatform Ctrl+Back, macOS=Cmd+Back}"/>
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>

@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Windows.Input;
+using System.Collections.Generic;
+using Avalonia.Collections;
 using AvaloniaEdit.Document;
 using Plot.Core;
 using ReactiveUI;
@@ -8,19 +9,17 @@ namespace Plot.ViewModels
 {
     public class MainWindowViewModel : ReactiveObject
     {
-        public MainWindowViewModel()
-        {
-            ClearOutput = ReactiveCommand.Create(() => OutputDocument.Text = "");
-            ExecuteSource = ReactiveCommand.Create(ParseAndExecute);
-        }
-
         public TextDocument SourceDocument { get; } = new();
         public TextDocument OutputDocument { get; } = new();
-        
-        public ICommand ClearOutput { get; }
-        public ICommand ExecuteSource { get; }
+        public IDictionary<string, Symbols.SymbolType> SymbolTable { get; } = new AvaloniaDictionary<string, Symbols.SymbolType>();
 
-        private void ParseAndExecute()
+        public void ClearOutput()
+        {
+            SymbolTable.Clear();
+            OutputDocument.Text = string.Empty;
+        }
+
+        public void ExecuteSource()
         {
             if (SourceDocument.TextLength == 0 || string.IsNullOrWhiteSpace(SourceDocument.Text))
             {
@@ -30,10 +29,11 @@ namespace Plot.ViewModels
             try
             {
                 var tokenChain = Lexer.Parse(SourceDocument.Text);
-
+ 
+                SymbolTable.Clear();
                 OutputDocument.Insert(OutputDocument.TextLength, $"\n----- RUN {DateTime.Now:G} -----\n\n");
 
-                foreach (var outputToken in Parser.ParseAndEval(tokenChain))
+                foreach (var outputToken in Parser.ParseAndEval(tokenChain, SymbolTable))
                 {
                     OutputDocument.Insert(OutputDocument.TextLength, $"> {outputToken}\n");
                 }

@@ -54,10 +54,8 @@ let Parse tokenList =
 
     Expr tokenList
 
-let public ParseAndEval(tList: TokenType list): SymbolType seq =
-    let rec symbolTable = Dictionary<string, SymbolType>()
-
-    and Expr tList = (Term >> ExprOpt) tList
+let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>): SymbolType seq =
+    let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) = 
         match tList with
         | TokenType.Add :: tail -> let (tLst, tVal) = Term tail
