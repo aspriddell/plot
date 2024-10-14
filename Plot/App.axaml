@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
              x:Class="Plot.App"
-             RequestedThemeVariant="Default" Name="Plot">
+             RequestedThemeVariant="Default"
+             Name="Plot">
     <NativeMenu.Menu>
         <NativeMenu/>
     </NativeMenu.Menu>

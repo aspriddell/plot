@@ -15,7 +15,6 @@ public partial class App : Application
     /// </summary>
     public static readonly IReadOnlyList<WindowTransparencyLevel> TransparencyLevels;
 
-    public static string Name => "Plot";
     public static string Version { get; }
     
     static App()
