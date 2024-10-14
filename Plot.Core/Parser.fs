@@ -12,7 +12,7 @@ exception VariableError of message: string * varName: string
 // <ExprOpt>     ::= "+" <Term> <ExprOpt> | "-" <Term> <ExprOpt> | <empty>
 // <Term>        ::= <Factor> <TermOpt>
 // <TermOpt>     ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
-// <Factor>      ::= <Base> <FactorOpt>
+// <Factor>      ::= <Base> <FactorOpt> | "-" <Base> <FactorOpt>
 // <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
 // <Base>        ::= <Number> | <Identifier> "=" <Expr> | <Identifier> | "(" <Expr> ")"
 // <Number>      ::= "NumI" <value> | "NumF" <value>
@@ -32,7 +32,10 @@ let Parse tokenList =
         | TokenType.Div :: tail -> (Factor >> TermOpt) tail
         | TokenType.Mod :: tail -> (Factor >> TermOpt) tail
         | _ -> tokenList
-    and Factor tokenList = (Base >> FactorOpt) tokenList
+    and Factor tokenList =
+       match tokenList with
+        | TokenType.Sub :: tail -> (Base >> FactorOpt) tail
+        | _ -> (Base >> FactorOpt) tokenList
     and FactorOpt tokenList =
         match tokenList with
         | TokenType.Pow :: tail -> (Base >> FactorOpt) tail
@@ -72,7 +75,12 @@ let public ParseAndEval(tList: TokenType list): SymbolType seq =
         | TokenType.Mod :: tail -> let (tLst, tVal) = Factor tail
                                    TermOpt (tLst, modValues(value, tVal))
         | _ -> (tList, value)
-    and Factor tList = (Base >> FactorOpt) tList
+    and Factor tList =
+        match tList with
+        // negative numbers (unary operator) is the same as subtracting from 0
+        | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
+                                   FactorOpt (tLst, subValues(SymbolType.Int 0, tVal))
+        | _ -> (Base >> FactorOpt) tList
     and FactorOpt (tList, value) =
         match tList with
         | TokenType.Pow :: tail -> let (tLst, tVal) = Base tail
