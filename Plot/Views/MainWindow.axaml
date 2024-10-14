@@ -1,41 +1,55 @@
-<windowing:AppWindow 
-        xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="using:Plot.ViewModels"
-        xmlns:avaloniaEdit="using:AvaloniaEdit"
-        xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
-        xmlns:plot="clr-namespace:Plot"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="Plot.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Title="{Binding Name, Source={x:Static Application.Current}}"
-        Width="1200" Height="600" MinWidth="500" MinHeight="300">
+<plot:ReactiveAppWindow x:TypeArguments="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Plot.ViewModels"
+    xmlns:avaloniaEdit="using:AvaloniaEdit"
+    xmlns:plot="clr-namespace:Plot"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="Plot.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    Title="{Binding WindowTitle}"
+    Background="{x:Null}"
+    Width="1200" Height="600" MinWidth="500" MinHeight="300">
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="_File">
                 <NativeMenu>
-                    <NativeMenuItem Header="_Open" Gesture="{OnPlatform Ctrl+O, macOS=Cmd+O}"/>
-                    <NativeMenuItem Header="_Save" Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}"/>
+                    <NativeMenuItem Header="_Open"
+                                    Command="{Binding OpenScript}"
+                                    Gesture="{OnPlatform Ctrl+O, macOS=Cmd+O}" />
+                    <NativeMenuItem Header="_Save"
+                                    Command="{Binding SaveScript}"
+                                    Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}" />
+                    <NativeMenuItem Header="_Save As"
+                                    Command="{Binding SaveScriptAs}"
+                                    Gesture="{OnPlatform Ctrl+Shift+S, macOS=Cmd+Shift+S}" />
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="_Run">
                 <NativeMenu>
-                    <NativeMenuItem Header="Execute Script" Command="{Binding ExecuteSource}" Gesture="{OnPlatform Ctrl+Enter, macOS=Cmd+Enter}"/>
+                    <NativeMenuItem Header="Execute Script"
+                                    Command="{Binding ExecuteSource}"
+                                    Gesture="{OnPlatform Ctrl+Enter, macOS=Cmd+Enter}" />
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="_Output">
                 <NativeMenu>
-                    <NativeMenuItem Header="Copy Output"/>
-                    <NativeMenuItem Header="Save Output"/>
-                    <NativeMenuItemSeparator/>
-                    <NativeMenuItem Header="Clear Output" Command="{Binding ClearOutput}" Gesture="{OnPlatform Ctrl+Back, macOS=Cmd+Back}"/>
+                    <NativeMenuItem Header="Copy Output"
+                                    Command="{Binding CopyOutput}"
+                                    Gesture="{OnPlatform Ctrl+Shift+C, macOS=Cmd+Shift+C}" />
+                    <NativeMenuItem Header="Save Output"
+                                    Command="{Binding SaveOutput}"/>
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="Clear Output"
+                                    Command="{Binding ClearOutput}"
+                                    Gesture="{OnPlatform Ctrl+Back, macOS=Cmd+Back}" />
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
     </NativeMenu.Menu>
-    
+
     <Window.Content>
         <Panel>
             <ExperimentalAcrylicBorder IsHitTestVisible="False">
@@ -50,10 +64,11 @@
 
             <DockPanel>
                 <StackPanel DockPanel.Dock="{OnPlatform Bottom, Windows=Top}" Orientation="Horizontal" Spacing="5" Margin="{OnPlatform 10, Windows='20,0,0,0'}">
-                    <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{Binding Name, Source={x:Static Application.Current}}"/>
-                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" Content="{x:Static plot:App.Version}"/>
+                    <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{Binding Name, Source={x:Static Application.Current}}" />
+                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" IsVisible="{Binding !FileLoaded}" Content="{x:Static plot:App.Version}" />
+                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#15f4ee" IsVisible="{Binding FileLoaded}" Content="{Binding OpenedFile.Name}" />
 
-                    <NativeMenuBar Margin="5,0,0,0"/>
+                    <NativeMenuBar Margin="5,0,0,0" />
                 </StackPanel>
 
                 <Grid DockPanel.Dock="Top" RowDefinitions="1.5*, 1, *" Margin="10,0">
@@ -66,7 +81,7 @@
                                              VerticalScrollBarVisibility="Visible"
                                              FontSize="16" />
 
-                    <GridSplitter Grid.Row="1" Background="DodgerBlue" Height="0" BorderThickness="1" ResizeDirection="Rows"/>
+                    <GridSplitter Grid.Row="1" Background="DodgerBlue" Height="0" BorderThickness="1" ResizeDirection="Rows" />
 
                     <avaloniaEdit:TextEditor Grid.Row="2"
                                              Margin="0,15"
@@ -81,4 +96,4 @@
             </DockPanel>
         </Panel>
     </Window.Content>
-</windowing:AppWindow>
+</plot:ReactiveAppWindow>
