@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
 using Plot.ViewModels;
 using ReactiveUI;
@@ -15,7 +18,7 @@ namespace Plot.Views;
 
 public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
 {
-    public MainWindow()
+    public MainWindow(string initialFilePath = null)
     {
         InitializeComponent();
 
@@ -24,9 +27,19 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
 
         TransparencyLevelHint = App.TransparencyLevels;
         
-        this.WhenActivated(action => action(ViewModel!.CopyToClipboardInteraction.RegisterHandler(CopyToClipboard)));
-        this.WhenActivated(action => action(ViewModel!.OpenFileDialogInteraction.RegisterHandler(HandleFileOpenPicker)));
-        this.WhenActivated(action => action(ViewModel!.SaveFileDialogInteraction.RegisterHandler(HandleFileSavePicker)));
+        this.WhenActivated(disposables =>
+        {
+            ViewModel!.CopyToClipboardInteraction.RegisterHandler(CopyToClipboard).DisposeWith(disposables);
+            ViewModel!.OpenFileDialogInteraction.RegisterHandler(HandleFileOpenPicker).DisposeWith(disposables);
+            ViewModel!.SaveFileDialogInteraction.RegisterHandler(HandleFileSavePicker).DisposeWith(disposables);
+
+            if (!string.IsNullOrEmpty(initialFilePath) && File.Exists(initialFilePath))
+            {
+                StorageProvider
+                    .TryGetFileFromPathAsync(new Uri(initialFilePath))
+                    .ContinueWith(t => Dispatcher.UIThread.InvokeAsync(() => ViewModel!.LoadFileInternal(t.Result)), TaskContinuationOptions.OnlyOnRanToCompletion);
+            }
+        });
     }
 
     protected override void OnLoaded(RoutedEventArgs e)
