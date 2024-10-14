@@ -48,7 +48,6 @@ let rec private scan input =
     match input with
     | [] -> []
     | '\n' :: tail -> TokenType.NewLine :: scan tail
-    | '#' :: tail -> (List.skipWhile (fun c -> c <> '\n') tail) |> scan
     | '+' :: tail -> TokenType.Add :: scan tail
     | '-' :: tail -> TokenType.Sub :: scan tail
     | '*' :: tail -> TokenType.Mul :: scan tail
@@ -58,6 +57,10 @@ let rec private scan input =
     | '(' :: tail -> TokenType.LPar :: scan tail
     | ')' :: tail -> TokenType.RPar :: scan tail
     | '=' :: tail -> TokenType.Eq :: scan tail
+    | '#' :: tail -> List.skipWhile (fun c -> c <> '\n') tail
+                    |> List.skip 1
+                    |> scan
+
     | c :: tail when Char.IsWhiteSpace c -> scan tail
 
     // if it's a digit, determine if it's an integer or floating point value.
