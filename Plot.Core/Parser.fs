@@ -16,8 +16,10 @@ exception VariableError of message: string * varName: string
 // <TermOpt>     ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
 // <Factor>      ::= <Base> <FactorOpt> | "-" <Base> <FactorOpt>
 // <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
-// <Base>        ::= <Number> | <Identifier> | "(" <Expr> ")"
+// <Base>        ::= <Number> | <Identifier> | "(" <Expr> ")" | <FnCall>
 // <Number>      ::= "NumI" <value> | "NumF" <value>
+// <FnCall>      ::= <Identifier> "(" <Arguments> ")"
+// <Arguments>   ::= <Expr> | ("," <Expr>)* | <empty>
 
 let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
