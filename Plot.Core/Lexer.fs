@@ -62,11 +62,11 @@ let rec private scan input =
                     |> scan
 
     | c :: tail when Char.IsWhiteSpace c -> scan tail
-
-    // if it's a digit, determine if it's an integer or floating point value.
-    | c :: tail when Char.IsDigit c ->
-        let (outStr, outVal, isFloating) =
-            scanNumber (tail, Char.GetNumericValue c, false, 1.0)
+    | c :: tail when Char.IsDigit c || c = '.' ->
+        let outStr, outVal, isFloating =
+            match c with
+            | '.' -> scanNumber (tail, 0, true, 10.0)
+            | _ -> scanNumber (tail, Char.GetNumericValue c, false, 1.0)
 
         if isFloating then
             NumF outVal :: scan outStr
