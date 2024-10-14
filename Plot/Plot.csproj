@@ -3,19 +3,36 @@
         <OutputType>WinExe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <TrimMode>full</TrimMode>
+        <PublishTrimmed>true</PublishTrimmed>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <PublishSingleFile>true</PublishSingleFile>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <EnableUnsafeUTF7Encoding>False</EnableUnsafeUTF7Encoding>
+        <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+        <HttpActivityPropagationSupport>False</HttpActivityPropagationSupport>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <EnableUnsafeBinaryFormatterSerialization>False</EnableUnsafeBinaryFormatterSerialization>
+    </PropertyGroup>
+
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.1.0"/>
+        <TrimmerRootAssembly Include="FluentAvalonia" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.1.4" />
         <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.Desktop" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.1.4" />
+        <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.4" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.4" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.4" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0"/>
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.4" />
         <PackageReference Include="FluentAvaloniaUI" Version="2.1.0" />
     </ItemGroup>
     
