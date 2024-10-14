@@ -57,6 +57,7 @@ let rec private scan input =
     | '(' :: tail -> TokenType.LPar :: scan tail
     | ')' :: tail -> TokenType.RPar :: scan tail
     | '=' :: tail -> TokenType.Eq :: scan tail
+    | ',' :: tail -> TokenType.Comma :: scan tail
     | '#' :: tail -> List.skipWhile (fun c -> c <> '\n') tail |> scan
 
     | c :: tail when Char.IsWhiteSpace c -> scan tail
@@ -74,7 +75,7 @@ let rec private scan input =
     // variables start with a letter
     | c :: tail when Char.IsLetter c ->
         let (remaining, varName) = scanVar (tail, string c)
-        TokenType.Var varName :: scan remaining
+        TokenType.Identifier varName :: scan remaining
 
     | _ -> raise (LexerException "Unexpected character")
 

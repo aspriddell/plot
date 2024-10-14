@@ -54,8 +54,8 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
 
         // prevent assignment in a block
-        | TokenType.Var name :: Eq :: _ -> raise (VariableError("Assignment failed", name))      
-        | TokenType.Var name :: tail ->
+        | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))      
+        | TokenType.Identifier name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
             | _ -> raise (VariableError($"\"{name}\" is not defined", name))
@@ -68,7 +68,7 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         | _ -> raise (ParserError "Parser error")
     and Assign tList =
         match tList with
-        | TokenType.Var name :: TokenType.Eq :: tail ->
+        | TokenType.Identifier name :: TokenType.Eq :: tail ->
             let (remaining, result) = Expr tail
             symbolTable[name] <- result
             (remaining, result)
@@ -79,7 +79,7 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
             | [] -> ()
             | TokenType.NewLine :: tail ->
                 yield! Root tail
-            | TokenType.Var _ :: TokenType.Eq :: _ ->
+            | TokenType.Identifier _ :: TokenType.Eq :: _ ->
                 let (remaining, _) = Assign tList
                 yield! Root remaining
             | _ ->
