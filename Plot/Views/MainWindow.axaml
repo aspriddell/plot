@@ -22,7 +22,7 @@
             </NativeMenuItem>
             <NativeMenuItem Header="_Run">
                 <NativeMenu>
-                    <NativeMenuItem Header="Execute Script" Command="{Binding ExecuteSource}" Gesture="{OnPlatform Cmd+Enter, macOS=Cmd+Enter}"/>
+                    <NativeMenuItem Header="Execute Script" Command="{Binding ExecuteSource}" Gesture="{OnPlatform Ctrl+Enter, macOS=Cmd+Enter}"/>
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="_Output">
