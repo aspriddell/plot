@@ -54,7 +54,7 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
 
         // prevent assignment in a block
-        | TokenType.Var _ :: Eq :: _ -> raise (ParserError "Assignment failed")      
+        | TokenType.Var name :: Eq :: _ -> raise (VariableError("Assignment failed", name))      
         | TokenType.Var name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
@@ -72,7 +72,7 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
             let (remaining, result) = Expr tail
             symbolTable[name] <- result
             (remaining, result)
-        | _ -> raise (ParserError "Variable assignment failed")
+        | _ -> raise (VariableError("Variable assignment failed", ""))
     and Root tList =
         seq {
             match tList with
