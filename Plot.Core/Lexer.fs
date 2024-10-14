@@ -48,6 +48,7 @@ let rec private scan input =
     match input with
     | [] -> []
     | '\n' :: tail -> TokenType.NewLine :: scan tail
+    | '#' :: tail -> (List.skipWhile (fun c -> c <> '\n') tail) |> scan
     | '+' :: tail -> TokenType.Add :: scan tail
     | '-' :: tail -> TokenType.Sub :: scan tail
     | '*' :: tail -> TokenType.Mul :: scan tail
