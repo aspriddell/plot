@@ -42,7 +42,11 @@ let internal divValues (v1: SymbolType, v2: SymbolType) : SymbolType =
 
 let internal modValues (v1: SymbolType, v2: SymbolType) : SymbolType =
     match v1, v2 with
-    | Int i1, Int i2 when i2 <> 0 -> Int(i1 % i2)
+    | Int i1, Int i2 when i2 <> 0 ->
+        let result = i1 % i2
+        // negative modulus - (-11) % 7 should be 3 but is -4
+        // to correct this, i2 needs to be added to the result - see https://math.stackexchange.com/a/2179581
+        if result < 0 then Int(result + i2) else Int(result)
     | Int _, Int _ -> raise (DivideByZeroException())
     | _ -> invalidOp "Modulus operator is only defined for integers"
 
