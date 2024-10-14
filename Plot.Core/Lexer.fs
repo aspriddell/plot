@@ -58,7 +58,7 @@ let rec private scan input =
     | ')' :: tail -> TokenType.RPar :: scan tail
     | '=' :: tail -> TokenType.Eq :: scan tail
     | '#' :: tail -> List.skipWhile (fun c -> c <> '\n') tail
-                    |> List.skip 1
+                    |> List.skip 1 // skip the newline itself as it's technically part of the comment
                     |> scan
 
     | c :: tail when Char.IsWhiteSpace c -> scan tail
