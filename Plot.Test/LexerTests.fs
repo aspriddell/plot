@@ -21,7 +21,7 @@ let LexerTestCases: TestCaseData list =
 let TestLexerParsing (input: string, tree: TokenType list): unit =
     let tokens = Parse input
     for token1, token2 in List.zip tokens tree do
-        Assert.AreEqual(token1, token2)
+        Assert.That(token1, Is.EqualTo(token2))
 
 [<TestCase("10 . 10", typedefof<LexerException>)>]
 [<TestCase("10.10.10", typedefof<InvalidNumberFormatException>)>]
