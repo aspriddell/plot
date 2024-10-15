@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
 using Plot.ViewModels;
 
 namespace Plot;
@@ -41,10 +42,25 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new Views.MainWindow(desktop.Args?.ElementAtOrDefault(0))
+            desktop.MainWindow = new Views.MainWindow
             {
                 DataContext = new MainWindowViewModel()
             };
+            
+            if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
+            {
+                lifetime.Activated += (sender, e) =>
+                {
+                    switch (e)
+                    {
+                        case FileActivatedEventArgs fileArgs when fileArgs.Files.OfType<IStorageFile>().Any() && desktop.MainWindow.DataContext is MainWindowViewModel vm:
+                            desktop.MainWindow.BringIntoView();
+                            
+                            _ = vm.LoadFileInternal(fileArgs.Files.OfType<IStorageFile>().First());
+                            break;
+                    }
+                };
+            }
         }
 
         base.OnFrameworkInitializationCompleted();

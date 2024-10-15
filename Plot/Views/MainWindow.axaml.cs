@@ -18,7 +18,7 @@ namespace Plot.Views;
 
 public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
 {
-    public MainWindow(string initialFilePath = null)
+    public MainWindow()
     {
         InitializeComponent();
 
@@ -26,19 +26,12 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
 
         TransparencyLevelHint = App.TransparencyLevels;
-        
+
         this.WhenActivated(disposables =>
         {
             ViewModel!.CopyToClipboardInteraction.RegisterHandler(CopyToClipboard).DisposeWith(disposables);
             ViewModel!.OpenFileDialogInteraction.RegisterHandler(HandleFileOpenPicker).DisposeWith(disposables);
             ViewModel!.SaveFileDialogInteraction.RegisterHandler(HandleFileSavePicker).DisposeWith(disposables);
-
-            if (!string.IsNullOrEmpty(initialFilePath) && File.Exists(initialFilePath))
-            {
-                StorageProvider
-                    .TryGetFileFromPathAsync(new Uri(initialFilePath))
-                    .ContinueWith(t => Dispatcher.UIThread.InvokeAsync(() => ViewModel!.LoadFileInternal(t.Result)), TaskContinuationOptions.OnlyOnRanToCompletion);
-            }
         });
     }
 
