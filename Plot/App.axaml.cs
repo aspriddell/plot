@@ -25,7 +25,7 @@ public partial class App : Application
         TransparencyLevels = OperatingSystem.IsWindowsVersionAtLeast(10, 22000)
             ? [WindowTransparencyLevel.Mica, WindowTransparencyLevel.AcrylicBlur]
             : [WindowTransparencyLevel.AcrylicBlur];
-        
+
 #if DEBUG
         Version = "Dev Edition";
 #else
@@ -47,22 +47,37 @@ public partial class App : Application
                 DataContext = new MainWindowViewModel()
             };
             
-            if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
+            // macOS activates the window to open a file
+            if (OperatingSystem.IsMacOS() && TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
             {
                 lifetime.Activated += (sender, e) =>
                 {
                     switch (e)
                     {
-                        case FileActivatedEventArgs fileArgs when fileArgs.Files.OfType<IStorageFile>().Any() && desktop.MainWindow.DataContext is MainWindowViewModel vm:
+                        case FileActivatedEventArgs fileArgs when fileArgs.Files.OfType<IStorageFile>().Any():
                             desktop.MainWindow.BringIntoView();
-                            
-                            _ = vm.LoadFileInternal(fileArgs.Files.OfType<IStorageFile>().First());
+                            (desktop.MainWindow.DataContext as MainWindowViewModel)?.LoadFileInternal(fileArgs.Files.OfType<IStorageFile>().First());
                             break;
                     }
                 };
             }
+            // whereas other systems just boot a new instance with the first arg as the file
+            if (!OperatingSystem.IsMacOS() && desktop.Args?.Length > 0 && desktop.MainWindow.DataContext is MainWindowViewModel vm)
+            {
+                LoadFileAsync(desktop.MainWindow.StorageProvider, desktop.Args.First(), vm);
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+    
+    private static async void LoadFileAsync(IStorageProvider storageProvider, string filePath, MainWindowViewModel viewModel)
+    {
+        var file = await storageProvider.TryGetFileFromPathAsync(filePath);
+
+        if (file != null)
+        {
+            await viewModel.LoadFileInternal(file);
+        }
     }
 }
