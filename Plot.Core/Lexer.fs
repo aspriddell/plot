@@ -47,6 +47,7 @@ let rec private scanVar (inputStr, currentVar) =
 let rec private scan input =
     match input with
     | [] -> []
+    | '\r' :: tail -> scan tail
     | '\n' :: tail -> TokenType.NewLine :: scan tail
     | '+' :: tail -> TokenType.Add :: scan tail
     | '-' :: tail -> TokenType.Sub :: scan tail
