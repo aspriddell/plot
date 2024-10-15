@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>en</string>
+        <key>CFBundleDisplayName</key>
+        <string>Plot</string>
+        <key>CFBundleExecutable</key>
+        <string>Plot</string>
+        <key>CFBundleIdentifier</key>
+        <string>moe.ppc.Plot</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+        <key>CFBundleName</key>
+        <string>Plot</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>CFBundleSupportedPlatforms</key>
+        <array>
+            <string>MacOSX</string>
+        </array>
+        <key>CFBundleVersion</key>
+        <string>1</string>
+        <key>LSApplicationCategoryType</key>
+        <string>public.app-category.developer-tools</string>
+        <key>LSMinimumSystemVersion</key>
+        <string>13.0</string>
+        <key>NSHumanReadableCopyright</key>
+        <string>Copyright (c) Albie Spriddell, Leon D'Exelle</string>
+        <key>UTExportedTypeDeclarations</key>
+        <array>
+            <dict>
+                <key>UTTypeConformsTo</key>
+                <array>
+                    <string>public.plain-text</string>
+                    <string>public.text</string>
+                </array>
+                <key>UTTypeDescription</key>
+                <string>PlotScript File</string>
+                <key>UTTypeIdentifier</key>
+                <string>moe.ppc.plotscript</string>
+                <key>UTTypeTagSpecification</key>
+                <dict>
+                    <key>public.filename-extension</key>
+                    <array>
+                        <string>plotscript</string>
+                    </array>
+                </dict>
+            </dict>
+        </array>
+        <key>CFBundleDocumentTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeName</key>
+                <string>PlotScript File</string>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>LSItemContentTypes</key>
+                <array>
+                    <string>moe.ppc.plotscript</string>
+                </array>
+            </dict>
+        </array>
+    </dict>
+</plist>

@@ -63,10 +63,10 @@
             </ExperimentalAcrylicBorder>
 
             <DockPanel>
-                <StackPanel DockPanel.Dock="{OnPlatform Bottom, Windows=Top}" Orientation="Horizontal" Spacing="5" Margin="{OnPlatform 10, Windows='20,0,0,0'}">
+                <StackPanel DockPanel.Dock="{OnPlatform Bottom, Windows=Top}" Orientation="Horizontal" Spacing="5" Margin="{OnPlatform 10, Windows='20,0,0,0'}" IsVisible="{OnPlatform {x:True}, macOS={x:False}}">
                     <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{Binding Name, Source={x:Static Application.Current}}" />
                     <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" IsVisible="{Binding !FileLoaded}" Content="{x:Static plot:App.Version}" />
-                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#15f4ee" IsVisible="{Binding FileLoaded}" Content="{Binding OpenedFile.Name}" />
+                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#0048ba" IsVisible="{Binding FileLoaded}" Content="{Binding OpenedFile.Name}" />
 
                     <NativeMenuBar Margin="5,0,0,0" />
                 </StackPanel>

@@ -8,9 +8,8 @@
 
     <PropertyGroup>
         <TrimMode>full</TrimMode>
+        <UseAppHost>true</UseAppHost>
         <PublishTrimmed>true</PublishTrimmed>
-        <PublishReadyToRun>true</PublishReadyToRun>
-        <PublishSingleFile>true</PublishSingleFile>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <EnableUnsafeUTF7Encoding>False</EnableUnsafeUTF7Encoding>
         <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
@@ -20,8 +19,14 @@
         <EnableUnsafeBinaryFormatterSerialization>False</EnableUnsafeBinaryFormatterSerialization>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('win-'))">
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <PublishSingleFile>true</PublishSingleFile>
+    </PropertyGroup>
+
     <ItemGroup>
         <TrimmerRootAssembly Include="FluentAvalonia" />
+        <TrimmerRootAssembly Include="Plot.Core" />
     </ItemGroup>
     
     <ItemGroup>
