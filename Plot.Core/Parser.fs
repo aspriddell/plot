@@ -19,7 +19,7 @@ exception VariableError of message: string * varName: string
 // <Base>        ::= <Number> | <Identifier> | "(" <Expr> ")" | <FnCall>
 // <Number>      ::= "NumI" <value> | "NumF" <value>
 // <FnCall>      ::= <Identifier> "(" <Arguments> ")"
-// <Arguments>   ::= <Expr> | ("," <Expr>)* | <empty>
+// <Arguments>   ::= <Expr> ("," <Expr>)* | <empty>
 
 let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
@@ -68,6 +68,15 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
+    // todo add FnCall handling once function cache is implemented
+    and Arguments tList =
+        match tList with
+        | [] -> (tList, [])
+        | _ -> let (remaining, result) = Expr tList
+               match remaining with
+               | TokenType.Comma :: tail -> let (r, res) = Arguments tail
+                                            (r, result :: res)
+               | _ -> (remaining, [result])
     and Assign tList =
         match tList with
         | TokenType.Identifier name :: TokenType.Eq :: tail ->
