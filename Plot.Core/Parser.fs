@@ -72,9 +72,12 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         match tList with
         | TokenType.Identifier name :: TokenType.Eq :: tail ->
             let (remaining, result) = Expr tail
-            symbolTable[name] <- result
-            (remaining, result)
-        | _ -> raise (VariableError("Variable assignment failed", ""))
+            if not (isAssignableSymbolType result) then
+                raise (VariableError("Result cannot be assigned to a variable", name))
+            else
+                symbolTable[name] <- result
+                (remaining, result)
+        | _ -> raise (ParserError "Parser error")
     and Root tList =
         seq {
             match tList with
