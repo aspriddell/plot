@@ -2,18 +2,15 @@
 
 open System
 
-/// <summary>
-/// Discriminated union representing the type of symbol.
-/// </summary>
 type SymbolType =
     | Int of int
     | Float of float
-    | PlotScriptFunction
-    | PlotScriptGraphDrawFunction
+    // takes a symbol and computes a new symbol
+    // i.e. f(2 * x + 1), passing in Int(3) would produce Int(7)
+    | PlotScriptFunction of (SymbolType -> SymbolType) 
 
 let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with
-    | PlotScriptGraphDrawFunction -> false
     | _ -> true
 
 let internal addValues (v1: SymbolType, v2: SymbolType) : SymbolType =
