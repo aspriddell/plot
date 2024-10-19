@@ -208,8 +208,7 @@ public class MainWindowViewModel : ReactiveObject
             SymbolTable.Clear();
             OutputDocument.Insert(OutputDocument.TextLength, $"\n----- RUN {DateTime.Now:G} -----\n\n");
 
-            // todo add fnTable support
-            foreach (var outputToken in Parser.ParseAndEval(tokenChain, SymbolTable, null))
+            foreach (var outputToken in Parser.ParseAndEval(tokenChain, SymbolTable, PlotScriptFunctionContainer.Default))
             {
                 OutputDocument.Insert(OutputDocument.TextLength, $"> {outputToken}\n");
             }

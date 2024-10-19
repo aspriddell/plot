@@ -22,7 +22,7 @@ exception VariableError of message: string * varName: string
 // <FnCall>      ::= <Identifier> "(" <Arguments> ")"
 // <Arguments>   ::= <Expr> ("," <Expr>)* | <empty>
 
-let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnTable: IDictionary<string, SymbolType list -> SymbolType>): SymbolType seq =
+let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnContainer: PlotScriptFunctionContainer): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) =
         match tList with
@@ -84,7 +84,7 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         else
             // perform the function call with the args, and continue execution
             let args = processedArgs |> List.map snd
-            (tList, fnTable[name] args)
+            (tList, fnContainer.FunctionTable[name] args)
     and Arguments tList =
         match tList with
         | [] -> (tList, [])
