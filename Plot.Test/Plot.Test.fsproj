@@ -12,6 +12,7 @@
         <Compile Include="LexerTests.fs" />
         <Compile Include="ParserTests.fs" />
         <Compile Include="TokenSplittingTests.fs" />
+        <Compile Include="FunctionContainerTests.fs" />
     </ItemGroup>
     
     <ItemGroup>
