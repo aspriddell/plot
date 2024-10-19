@@ -4,7 +4,7 @@ open Plot.Core
 open Plot.Core.Symbols
 
 [<PlotScriptFunction("sin")>]
-let public sin (x: SymbolType list) : SymbolType =
+let public sin (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
     | Int i -> Float(float i |> sin)
     | Float f -> Float(f |> sin)
@@ -12,7 +12,7 @@ let public sin (x: SymbolType list) : SymbolType =
     | _ -> invalidOp "Sin not defined for the given type"
 
 [<PlotScriptFunction("cos")>]
-let public cos (x: SymbolType list) : SymbolType =
+let public cos (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
     | Int i -> Float(float i |> cos)
     | Float f -> Float(f |> cos)
@@ -20,7 +20,7 @@ let public cos (x: SymbolType list) : SymbolType =
     | _ -> invalidOp "Cos not defined for the given type"
 
 [<PlotScriptFunction("tan")>]
-let public tan (x: SymbolType list) : SymbolType =
+let public tan (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
     | Int i -> Float(float i |> tan)
     | Float f -> Float(f |> tan)
@@ -28,7 +28,7 @@ let public tan (x: SymbolType list) : SymbolType =
     | _ -> invalidOp "Tan not defined for the given type"
     
 [<PlotScriptFunction("asin")>]
-let public asin (x: SymbolType list) : SymbolType =
+let public asin (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
     | Int i -> Float(float i |> asin)
     | Float f -> Float(f |> asin)
@@ -36,7 +36,7 @@ let public asin (x: SymbolType list) : SymbolType =
     | _ -> invalidOp "Asin not defined for the given type"
 
 [<PlotScriptFunction("acos")>]
-let public acos (x: SymbolType list) : SymbolType =
+let public acos (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
     | Int i -> Float(float i |> acos)
     | Float f -> Float(f |> acos)
@@ -44,7 +44,7 @@ let public acos (x: SymbolType list) : SymbolType =
     | _ -> invalidOp "Acos not defined for the given type"
 
 [<PlotScriptFunction("atan")>]
-let public atan (x: SymbolType list) : SymbolType =
+let public atan (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
     | Int i -> Float(float i |> atan)
     | Float f -> Float(f |> atan)
@@ -52,7 +52,7 @@ let public atan (x: SymbolType list) : SymbolType =
     | _ -> invalidOp "Atan not defined for the given type"
 
 [<PlotScriptFunction("atan2")>]
-let public atan2 (x: SymbolType list) : SymbolType =
+let public atan2 (x: SymbolType list): SymbolType =
     match x with
     | [Int i1; Int i2] -> Float(float i1 |> atan2 (float i2))
     | [Int i; Float f] -> Float(float i |> atan2 f)

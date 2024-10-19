@@ -13,7 +13,7 @@ let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with
     | _ -> true
 
-let internal addValues (v1: SymbolType, v2: SymbolType) : SymbolType =
+let internal addValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 -> Int(i1 + i2)
     | Float f1, Float f2 -> Float(f1 + f2)
@@ -22,7 +22,7 @@ let internal addValues (v1: SymbolType, v2: SymbolType) : SymbolType =
     
     | _ -> invalidOp "Addition not defined for the given types"
 
-let internal subValues (v1: SymbolType, v2: SymbolType) : SymbolType =
+let internal subValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 -> Int(i1 - i2)
     | Float f1, Float f2 -> Float(f1 - f2)
@@ -31,7 +31,7 @@ let internal subValues (v1: SymbolType, v2: SymbolType) : SymbolType =
     
     | _ -> invalidOp "Subtraction not defined for the given types"
 
-let internal mulValues (v1: SymbolType, v2: SymbolType) : SymbolType =
+let internal mulValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 -> Int(i1 * i2)
     | Float f1, Float f2 -> Float(f1 * f2)
@@ -40,7 +40,7 @@ let internal mulValues (v1: SymbolType, v2: SymbolType) : SymbolType =
     
     | _ -> invalidOp "Multiplication not defined for the given types"
 
-let internal divValues (v1: SymbolType, v2: SymbolType) : SymbolType =
+let internal divValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 when i2 <> 0 -> Int(i1 / i2)
     | Float f1, Float f2 when f2 <> 0.0 -> Float(f1 / f2)
@@ -55,7 +55,7 @@ let internal divValues (v1: SymbolType, v2: SymbolType) : SymbolType =
     
     | _ -> invalidOp "Division not defined for the given types"
 
-let internal modValues (v1: SymbolType, v2: SymbolType) : SymbolType =
+let internal modValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 when i2 <> 0 ->
         let result = i1 % i2
@@ -66,7 +66,7 @@ let internal modValues (v1: SymbolType, v2: SymbolType) : SymbolType =
     | Int _, Int _ -> raise (DivideByZeroException())
     | _ -> invalidOp "Modulus operator is only defined for integers"
 
-let internal powValues (v1: SymbolType, v2: SymbolType) : SymbolType =
+let internal powValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 -> Int(int (float i1 ** float i2))
     | Float f1, Float f2 -> Float(f1 ** f2)
