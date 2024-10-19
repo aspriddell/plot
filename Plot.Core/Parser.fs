@@ -5,6 +5,7 @@ open Plot.Core
 open Plot.Core.Symbols
 
 exception ParserError of message: string
+exception FunctionNotFoundError of name: string
 exception VariableError of message: string * varName: string
 
 // Grammar:
@@ -21,7 +22,7 @@ exception VariableError of message: string * varName: string
 // <FnCall>      ::= <Identifier> "(" <Arguments> ")"
 // <Arguments>   ::= <Expr> ("," <Expr>)* | <empty>
 
-let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>): SymbolType seq =
+let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnTable: IDictionary<string, SymbolType list -> SymbolType>): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) =
         match tList with
@@ -68,7 +69,22 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
-    // todo add FnCall handling once function cache is implemented
+    // todo add FnCall handler (maybe move FnCallExec as nested function)
+    and FnCallExec(name: string, tList: TokenType list) =
+        let (found, fnCall) = fnTable.TryGetValue(name)
+        if not found then
+            raise (FunctionNotFoundError name)
+        else
+            // evaluate each set of args in the function call before passing them to the final function
+            let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
+
+            // ensure all tokens were processed
+            if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
+                raise (ParserError "Function call failed")
+            else
+                // perform the function call with the args, and continue execution
+                let args = processedArgs |> List.map snd
+                (tList, fnCall args)
     and Arguments tList =
         match tList with
         | [] -> (tList, [])
@@ -104,4 +120,3 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         }
 
     Root tList
-    
