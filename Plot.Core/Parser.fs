@@ -69,22 +69,22 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
-    // todo add FnCall handler (maybe move FnCallExec as nested function)
+    // todo add FnCall handler:
+    // - takes the name and checks it against the function table
+    // - if the function is not found, raise an error
+    // - if the function is found, evaluate the arguments and pass them to the function via FnCallExec
+    // - maybe move FnCallExec as nested function?
     and FnCallExec(name: string, tList: TokenType list) =
-        let (found, fnCall) = fnTable.TryGetValue(name)
-        if not found then
-            raise (FunctionNotFoundError name)
-        else
-            // evaluate each set of args in the function call before passing them to the final function
-            let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
+        // evaluate each set of args in the function call before passing them to the final function
+        let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
 
-            // ensure all tokens were processed
-            if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
-                raise (ParserError "Function call failed")
-            else
-                // perform the function call with the args, and continue execution
-                let args = processedArgs |> List.map snd
-                (tList, fnCall args)
+        // ensure all tokens were processed
+        if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
+            raise (ParserError "Function call failed")
+        else
+            // perform the function call with the args, and continue execution
+            let args = processedArgs |> List.map snd
+            (tList, fnTable[name] args)
     and Arguments tList =
         match tList with
         | [] -> (tList, [])
