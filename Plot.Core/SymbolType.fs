@@ -12,6 +12,13 @@ type SymbolType =
 let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with
     | _ -> true
+    
+let internal negateValue (v: SymbolType): SymbolType =
+    match v with
+    | Int i -> Int(-i)
+    | Float f -> Float(-f)
+
+    | _ -> invalidOp "Negation not defined for the given type"
 
 let internal addValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with

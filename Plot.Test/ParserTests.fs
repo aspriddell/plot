@@ -22,6 +22,8 @@ let ParserTestCases: TestCaseData list = [
     // unary number handling
     TestCaseData("-512", SymbolType.Int(-512))
     TestCaseData("-21.25", SymbolType.Float(-21.25))
+    TestCaseData("10.0^-2", SymbolType.Float(0.01))
+    TestCaseData("10.5^-3.2", SymbolType.Float(0.00053975197))
 ]
 
 [<TestCaseSource(nameof ParserTestCases)>]
@@ -32,5 +34,7 @@ let TestSimpleExpressionParsing (input: string, output: SymbolType) =
         // floats are expected to work for 6-9 digits
         // see https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/floating-point-numeric-types#characteristics-of-the-floating-point-types
         Assert.That(floatOut, Is.EqualTo(floatExpected).Within(0.00001))
-     | expected, head ->
+    | SymbolType.Int intExpected, SymbolType.Int intOut ->
+        Assert.That(intOut, Is.EqualTo(intExpected))
+    | expected, head ->
         Assert.That(head, Is.EqualTo(expected))

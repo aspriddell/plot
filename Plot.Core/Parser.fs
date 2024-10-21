@@ -16,7 +16,7 @@ exception VariableError of message: string * varName: string
 // <Term>        ::= <Factor> <TermOpt>
 // <TermOpt>     ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
 // <Factor>      ::= <Base> <FactorOpt>
-// <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
+// <FactorOpt>   ::= "^" <Factor> | <empty>
 // <Base>        ::= "-" <Base> | <Number> | <Identifier> | "(" <Expr> ")" | <FnCall>
 // <Number>      ::= "NumI" <value> | "NumF" <value>
 // <FnCall>      ::= <Identifier> "(" <Arguments> ")"
@@ -49,19 +49,22 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
         | _ -> (tList, value)
     and Base tList =
         match tList with
-        | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
-                                   (tLst, subValues(SymbolType.Int 0, tVal))
         | TokenType.NumI value :: tail -> (tail, SymbolType.Int value)
         | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
+        | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
+                                   (tLst, negateValue tVal)
+
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
         | TokenType.Identifier name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
             | _ -> raise (VariableError($"\"{name}\" is not defined", name))
+
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
                                     match tLst with
                                     | TokenType.RPar :: tail -> (tail, tVal)
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
+
         | _ -> raise (ParserError "Parser error")
     // todo add FnCall handler:
     // - takes the name and checks it against the function table
