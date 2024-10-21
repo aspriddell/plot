@@ -11,6 +11,7 @@ type public TokenType =
     | LPar // left parenthesis (
     | RPar // right parenthesis )
     | Eq // assignment (=)
-    | Var of string // variable
+    | Comma // comma (,)
     | NumI of int // integer number
     | NumF of float // floating point number
+    | Identifier of string // identifier (variable or fn name)

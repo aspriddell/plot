@@ -8,8 +8,14 @@
   <ItemGroup>
     <Compile Include="SymbolType.fs" />
     <Compile Include="TokenType.fs" />
+    <Compile Include="TokenUtils.fs" />
+    <Compile Include="FunctionContainer.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Lexer.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Functions\Trig.fs" />
   </ItemGroup>
 
 </Project>

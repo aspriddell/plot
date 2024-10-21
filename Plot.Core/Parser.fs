@@ -5,6 +5,7 @@ open Plot.Core
 open Plot.Core.Symbols
 
 exception ParserError of message: string
+exception FunctionNotFoundError of name: string
 exception VariableError of message: string * varName: string
 
 // Grammar:
@@ -16,10 +17,12 @@ exception VariableError of message: string * varName: string
 // <TermOpt>     ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
 // <Factor>      ::= <Base> <FactorOpt> | "-" <Base> <FactorOpt>
 // <FactorOpt>   ::= "^" <Base> <FactorOpt> | <empty>
-// <Base>        ::= <Number> | <Identifier> | "(" <Expr> ")"
+// <Base>        ::= <Number> | <Identifier> | "(" <Expr> ")" | <FnCall>
 // <Number>      ::= "NumI" <value> | "NumF" <value>
+// <FnCall>      ::= <Identifier> "(" <Arguments> ")"
+// <Arguments>   ::= <Expr> ("," <Expr>)* | <empty>
 
-let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, SymbolType>): SymbolType seq =
+let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnContainer: PlotScriptFunctionContainer): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) =
         match tList with
@@ -54,8 +57,8 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
 
         // prevent assignment in a block
-        | TokenType.Var name :: Eq :: _ -> raise (VariableError("Assignment failed", name))      
-        | TokenType.Var name :: tail ->
+        | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))      
+        | TokenType.Identifier name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
             | _ -> raise (VariableError($"\"{name}\" is not defined", name))
@@ -66,20 +69,47 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
+    // todo add FnCall handler:
+    // - takes the name and checks it against the function table
+    // - if the function is not found, raise an error
+    // - if the function is found, evaluate the arguments and pass them to the function via FnCallExec
+    // - maybe move FnCallExec as nested function?
+    and FnCallExec(name: string, tList: TokenType list) =
+        // evaluate each set of args in the function call before passing them to the final function
+        let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
+
+        // ensure all tokens were processed
+        if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
+            raise (ParserError "Function call failed")
+        else
+            // perform the function call with the args, and continue execution
+            let args = processedArgs |> List.map snd
+            (tList, fnContainer.FunctionTable[name] args)
+    and Arguments tList =
+        match tList with
+        | [] -> (tList, [])
+        | _ -> let (remaining, result) = Expr tList
+               match remaining with
+               | TokenType.Comma :: tail -> let (r, res) = Arguments tail
+                                            (r, result :: res)
+               | _ -> (remaining, [result])
     and Assign tList =
         match tList with
-        | TokenType.Var name :: TokenType.Eq :: tail ->
+        | TokenType.Identifier name :: TokenType.Eq :: tail ->
             let (remaining, result) = Expr tail
-            symbolTable[name] <- result
-            (remaining, result)
-        | _ -> raise (VariableError("Variable assignment failed", ""))
+            if not (isAssignableSymbolType result) then
+                raise (VariableError("Result cannot be assigned to a variable", name))
+            else
+                symbolTable[name] <- result
+                (remaining, result)
+        | _ -> raise (ParserError "Parser error")
     and Root tList =
         seq {
             match tList with
             | [] -> ()
             | TokenType.NewLine :: tail ->
                 yield! Root tail
-            | TokenType.Var _ :: TokenType.Eq :: _ ->
+            | TokenType.Identifier _ :: TokenType.Eq :: _ ->
                 let (remaining, _) = Assign tList
                 yield! Root remaining
             | _ ->
@@ -90,4 +120,3 @@ let public ParseAndEval(tList: TokenType list, symbolTable: IDictionary<string, 
         }
 
     Root tList
-    

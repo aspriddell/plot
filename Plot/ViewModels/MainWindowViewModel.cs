@@ -208,7 +208,7 @@ public class MainWindowViewModel : ReactiveObject
             SymbolTable.Clear();
             OutputDocument.Insert(OutputDocument.TextLength, $"\n----- RUN {DateTime.Now:G} -----\n\n");
 
-            foreach (var outputToken in Parser.ParseAndEval(tokenChain, SymbolTable))
+            foreach (var outputToken in Parser.ParseAndEval(tokenChain, SymbolTable, PlotScriptFunctionContainer.Default))
             {
                 OutputDocument.Insert(OutputDocument.TextLength, $"> {outputToken}\n");
             }

@@ -26,7 +26,7 @@ let ParserTestCases: TestCaseData list = [
 
 [<TestCaseSource(nameof ParserTestCases)>]
 let TestSimpleExpressionParsing (input: string, output: SymbolType) =
-    let outputSeq = input |> Lexer.Parse |> fun t -> Parser.ParseAndEval(t, Dictionary<string, SymbolType>())
+    let outputSeq = input |> Lexer.Parse |> fun t -> Parser.ParseAndEval(t, Dictionary<string, SymbolType>(), PlotScriptFunctionContainer.Default)
     match output, outputSeq |> Seq.head with
     | SymbolType.Float floatExpected, SymbolType.Float floatOut ->
         // floats are expected to work for 6-9 digits
