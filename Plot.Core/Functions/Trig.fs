@@ -1,8 +1,39 @@
 ﻿module Plot.Core.Functions.Trig
 
+open System
 open Plot.Core
 open Plot.Core.Symbols
 
+[<PlotScriptFunction("pi")>]
+let public piConst (x: SymbolType list): SymbolType =
+    if x.Length <> 0 then
+        invalidArg "pi" "Pi expects no arguments"
+    else
+        Float(Math.PI)
+
+[<PlotScriptFunction("tau")>]
+let public tauConst (x: SymbolType list): SymbolType =
+    if x.Length <> 0 then
+        invalidArg "tau" "Tau expects no arguments"
+    else
+        Float(Math.Tau)
+
+[<PlotScriptFunction("deg2rad")>]
+let public degToRad (x: SymbolType list): SymbolType =
+    match x |> Seq.exactlyOne with
+    | Int i -> Float(float i * Math.PI / 180.0)
+    | Float f -> Float(f * Math.PI / 180.0)
+
+    | _ -> invalidOp "DegToRad not defined for the given type"
+    
+[<PlotScriptFunction("rad2deg")>]
+let public radToDeg (x: SymbolType list): SymbolType =
+    match x |> Seq.exactlyOne with
+    | Int i -> Float(float i * 180.0 / Math.PI)
+    | Float f -> Float(f * 180.0 / Math.PI)
+
+    | _ -> invalidOp "RadToDeg not defined for the given type"
+        
 [<PlotScriptFunction("sin")>]
 let public sin (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
