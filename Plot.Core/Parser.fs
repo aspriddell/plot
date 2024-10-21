@@ -22,6 +22,9 @@ exception VariableError of message: string * varName: string
 // <FnCall>      ::= <Identifier> "(" <Arguments> ")"
 // <Arguments>   ::= <Expr> ("," <Expr>)* | <empty>
 
+// in the implementation below, "Arguments" is handled in FnCallExec to allow for code sharing with the f(...) handler,
+// which requires arguments not to be processed at the time of the call (to allow for calling the output function with different arguments)
+
 let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnContainer: PlotScriptFunctionContainer): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) =
@@ -54,6 +57,7 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
         | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
                                    (tLst, negateValue tVal)
 
+        // feature: if there's a method like pi(), you can reassign it because symbols are checked before functions
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
         | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> (tail, symbolTable[name])
         | TokenType.Identifier name :: tail when fnContainer.FunctionTable.ContainsKey(name) -> FnCall name tail
@@ -66,27 +70,18 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
 
         | _ -> raise (ParserError "Parser error")
     and FnCall name tList =
-        let rec parseArgs tList acc =
-            match tList with
-            | TokenType.RPar :: tail -> (tail, List.rev acc)
-            | _ ->
-                let (remaining, result) = Expr tList
-                match remaining with
-                | TokenType.Comma :: tail -> parseArgs tail (result :: acc)
-                | TokenType.RPar :: tail -> (tail, List.rev (result :: acc))
-                | _ -> raise (ParserError "Expected ',' or ')' in function call arguments.")
-        // skip needed to skip initial opening parenthesis
-        let remaining, args = parseArgs (List.skip 1 tList) []
-        let result = fnContainer.FunctionTable[name] args
-        (remaining, result)
-    and Arguments tList =
-        match tList with
-        | [] -> (tList, [])
-        | _ -> let (remaining, result) = Expr tList
-               match remaining with
-               | TokenType.Comma :: tail -> let (r, res) = Arguments tail
-                                            (r, result :: res)
-               | _ -> (remaining, [result])
+        let FnCallExec name tList =
+            if List.length tList > 0 then
+                let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
+                if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
+                    raise (ParserError "Function call failed")
+
+                fnContainer.FunctionTable[name] (processedArgs |> List.map snd)
+            else
+                fnContainer.FunctionTable[name] []
+
+        let (fnCallTokens, remaining) = TokenUtils.extractFnCallTokens tList
+        (remaining, FnCallExec name fnCallTokens)
     and Assign tList =
         match tList with
         | TokenType.Identifier name :: TokenType.Eq :: tail ->
