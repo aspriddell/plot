@@ -90,20 +90,20 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         // function assignment
         | TokenType.Identifier name :: TokenType.Eq :: TokenType.Identifier identifier :: tail when identifier = "f" && name <> "f" ->
             let (fnTokens, remaining) = TokenUtils.extractFnCallTokens tail
-            let symbolTableSnapshot = Dictionary<string, SymbolType>(symbolTable)
-            let fnCallback = fun input ->
-                let tempTable = Dictionary<string, SymbolType>(symbolTableSnapshot)
-                Seq.zip TokenUtils.generateAsciiVariableSequence input |> Seq.iter tempTable.Add
-
-                ParseAndEval(fnTokens, tempTable, fnContainer) |> Seq.exactlyOne
+            let fnCallback = fun inputs ->
+                let fnSymbolTable = Dictionary<string, SymbolType>(symbolTable)
+                Seq.zip TokenUtils.asciiVariableSequence inputs |> Seq.iter fnSymbolTable.Add
+                ParseAndEval(fnTokens, fnSymbolTable, fnContainer) |> Seq.exactlyOne
 
             let callable = SymbolType.PlotScriptFunction fnCallback
 
             symbolTable[name] <- callable
             (remaining, callable)
-
-        // handle variable assignment
+        // variable assignment
         | TokenType.Identifier name :: TokenType.Eq :: tail ->
+            if name = "f" then
+                raise (VariableError("Cannot assign to function name", name))
+
             let (remaining, result) = Expr tail
             if not (isAssignableSymbolType result) then
                 raise (VariableError("Result cannot be assigned to a variable", name))
