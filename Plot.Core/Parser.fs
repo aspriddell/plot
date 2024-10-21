@@ -10,7 +10,7 @@ exception VariableError of message: string * varName: string
 
 // Grammar:
 // <:Root:>      ::= <Assign> | <Expr> | <empty>
-// <Assign>      ::= "Var" "=" <Expr>
+// <Assign>      ::= "Identifier" "=" <Expr> | "Identifier" = "f" "(" <:Root:> ")"
 // <Expr>        ::= <Term> <ExprOpt>
 // <ExprOpt>     ::= "+" <Term> <ExprOpt> | "-" <Term> <ExprOpt> | <empty>
 // <Term>        ::= <Factor> <TermOpt>
@@ -25,7 +25,7 @@ exception VariableError of message: string * varName: string
 // in the implementation below, "Arguments" is handled in FnCallExec to allow for code sharing with the f(...) handler,
 // which requires arguments not to be processed at the time of the call (to allow for calling the output function with different arguments)
 
-let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnContainer: PlotScriptFunctionContainer): SymbolType seq =
+let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string, SymbolType>, fnContainer: PlotScriptFunctionContainer): SymbolType seq =
     let rec Expr tList = (Term >> ExprOpt) tList
     and ExprOpt (tList, value) =
         match tList with
@@ -59,8 +59,11 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
 
         // feature: if there's a method like pi(), you can reassign it because symbols are checked before functions
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
-        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> (tail, symbolTable[name])
-        | TokenType.Identifier name :: tail when fnContainer.FunctionTable.ContainsKey(name) -> FnCall name tail
+        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->
+            match symbolTable[name] with
+            | SymbolType.PlotScriptFunction func -> FnCall func tail
+            | _ -> (tail, symbolTable[name])
+        | TokenType.Identifier name :: tail when fnContainer.FunctionTable.ContainsKey(name) -> FnCall fnContainer.FunctionTable[name] tail
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
 
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
@@ -69,21 +72,37 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
-    and FnCall name tList =
-        let FnCallExec name tList =
-            if List.length tList > 0 then
-                let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
+    and FnCall func tList =
+        let FnCallExec callTokenList =
+            if List.length callTokenList > 0 then
+                let processedArgs = TokenUtils.splitTokenArguments callTokenList |> List.map Expr
                 if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
                     raise (ParserError "Function call failed")
 
-                fnContainer.FunctionTable[name] (processedArgs |> List.map snd)
+                func (processedArgs |> List.map snd)
             else
-                fnContainer.FunctionTable[name] []
+                func []
 
         let (fnCallTokens, remaining) = TokenUtils.extractFnCallTokens tList
-        (remaining, FnCallExec name fnCallTokens)
+        (remaining, FnCallExec fnCallTokens)
     and Assign tList =
         match tList with
+        // handle function assignment
+        | TokenType.Identifier name :: TokenType.Eq :: TokenType.Identifier identifier :: tail when identifier = "f" ->
+            let (fnTokens, remaining) = TokenUtils.extractFnCallTokens tail
+            let symbolTableSnapshot = Dictionary<string, SymbolType>(symbolTable)
+            let fnCallback = fun input ->
+                let tempTable = Dictionary<string, SymbolType>(symbolTableSnapshot)
+                Seq.zip TokenUtils.generateAsciiVariableSequence input |> Seq.iter tempTable.Add
+
+                ParseAndEval(fnTokens, tempTable, fnContainer) |> Seq.exactlyOne
+
+            let callable = SymbolType.PlotScriptFunction fnCallback
+
+            symbolTable[name] <- callable
+            (remaining, callable)
+
+        // handle variable assignment
         | TokenType.Identifier name :: TokenType.Eq :: tail ->
             let (remaining, result) = Expr tail
             if not (isAssignableSymbolType result) then

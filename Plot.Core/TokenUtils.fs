@@ -20,9 +20,11 @@ let public splitTokenArguments argList =
     | _ -> raise (Exception "LPar/RPar padding not present")
 
 /// <summary>
-/// Extracts tokens immediately involved in a function call, returing the call tokens and the remaining items.
-/// The list must start with an LPar 
+/// Extracts tokens immediately involved in a function call, returning the call tokens and the remaining items.
 /// </summary>
+/// <remarks>
+/// The list must start/end with LPar/RPar
+/// </remarks>
 let public extractFnCallTokens tokenList: TokenType list * TokenType list =
     // as tokens are collected in reverse, once we reach the end of the (potentially nested) call the list needs to be reversed
     // calls need to track the current list and the depth (unclosed LPar count) to ensure nested calls aren't cut
@@ -39,3 +41,12 @@ let public extractFnCallTokens tokenList: TokenType list * TokenType list =
     match tokenList with
     | TokenType.LPar :: TokenType.RPar :: tail -> ([], tail) // handle parameterless calls like pi()
     | _ -> extractFnCall [] 0 tokenList                      // normal calls like sin(1)
+    
+let public generateAsciiVariableSequence =
+    let charSeq =
+        seq {
+            yield! ['x' .. 'z']
+            yield! ['a' .. 'w']
+        }
+
+    Seq.map (_.ToString()) charSeq

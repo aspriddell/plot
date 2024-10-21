@@ -7,7 +7,7 @@ type SymbolType =
     | Float of float
     // takes a symbol and computes a new symbol
     // i.e. f(2 * x + 1), passing in Int(3) would produce Int(7)
-    | PlotScriptFunction of (SymbolType -> SymbolType) 
+    | PlotScriptFunction of (SymbolType list -> SymbolType) 
 
 let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with
