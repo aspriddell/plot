@@ -42,11 +42,12 @@ let public extractFnCallTokens tokenList: TokenType list * TokenType list =
     | TokenType.LPar :: TokenType.RPar :: tail -> ([], tail) // handle parameterless calls like pi()
     | _ -> extractFnCall [] 0 tokenList                      // normal calls like sin(1)
     
-let public generateAsciiVariableSequence =
+let public asciiVariableSequence =
     let charSeq =
         seq {
-            yield! ['x' .. 'z']
-            yield! ['a' .. 'w']
+            yield! ['x' .. 'z'] // x, y, z
+            yield! ['a' .. 'e'] // wrap to a
+            yield! ['g' .. 'w'] // skip f (reserved)
         }
 
     Seq.map (_.ToString()) charSeq

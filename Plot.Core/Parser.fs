@@ -87,8 +87,8 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         (remaining, FnCallExec fnCallTokens)
     and Assign tList =
         match tList with
-        // handle function assignment
-        | TokenType.Identifier name :: TokenType.Eq :: TokenType.Identifier identifier :: tail when identifier = "f" ->
+        // function assignment
+        | TokenType.Identifier name :: TokenType.Eq :: TokenType.Identifier identifier :: tail when identifier = "f" && name <> "f" ->
             let (fnTokens, remaining) = TokenUtils.extractFnCallTokens tail
             let symbolTableSnapshot = Dictionary<string, SymbolType>(symbolTable)
             let fnCallback = fun input ->
@@ -107,9 +107,9 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
             let (remaining, result) = Expr tail
             if not (isAssignableSymbolType result) then
                 raise (VariableError("Result cannot be assigned to a variable", name))
-            else
-                symbolTable[name] <- result
-                (remaining, result)
+
+            symbolTable[name] <- result
+            (remaining, result)
         | _ -> raise (ParserError "Parser error")
     and Root tList =
         seq {
@@ -121,7 +121,7 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
                 let (remaining, _) = Assign tList
                 yield! Root remaining
             | _ ->
-                let remaining, result = Expr tList
+                let (remaining, result) = Expr tList
 
                 yield result
                 yield! Root remaining
