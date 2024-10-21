@@ -18,7 +18,7 @@ type public PlotScriptFunctionAttribute(identifier: string) =
 type public PlotScriptFunctionContainer() =
     let functions = Dictionary<string, SymbolType list -> SymbolType>(StringComparer.OrdinalIgnoreCase)
     let processAssembly (assembly: Assembly): unit =
-        for method in assembly.GetTypes() |> Seq.collect (_.GetMethods()) do
+        for method in assembly.GetTypes() |> Seq.collect (_.GetMethods()) |> Seq.filter (_.IsStatic) do
             let attributes = method.GetCustomAttributes(typeof<PlotScriptFunctionAttribute>, false)
             for attribute in attributes do
                 let functionAttribute = attribute :?> PlotScriptFunctionAttribute
