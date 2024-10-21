@@ -38,7 +38,7 @@ let rec private scanNumber (inputStr, inputValue, isFloating, divisor) =
 // Scan variables, a string of characters starting with a letter
 let rec private scanVar (inputStr, currentVar) =
     match inputStr with
-    | c :: tail when Char.IsLetterOrDigit c -> scanVar (tail, currentVar + string c)
+    | c :: tail when Char.IsLetterOrDigit c || c = '_' -> scanVar (tail, currentVar + string c)
     | _ -> (inputStr, currentVar)
 
 /// <summary>
@@ -73,8 +73,8 @@ let rec private scan input =
         else
             NumI(int outVal) :: scan outStr
 
-    // variables start with a letter
-    | c :: tail when Char.IsLetter c ->
+    // variables start with a letter or underscore
+    | c :: tail when Char.IsLetter c || c = '_' ->
         let (remaining, varName) = scanVar (tail, string c)
         TokenType.Identifier varName :: scan remaining
 
