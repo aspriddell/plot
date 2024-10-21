@@ -51,17 +51,17 @@ public partial class App : Application
             // macOS activates the window to open a file
             if (OperatingSystem.IsMacOS() && TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
             {
-                lifetime.Activated += (_, e) =>
+                lifetime.Activated += async (_, e) =>
                 {
                     switch (e)
                     {
                         case FileActivatedEventArgs fileArgs when fileArgs.Files.OfType<IStorageFile>().Any():
-                            PlotScriptDocument.LoadFileAsync(fileArgs.Files.OfType<IStorageFile>().First())
-                                .ContinueWith(t =>
-                                {
-                                    ((MainWindowViewModel)desktop.MainWindow.DataContext).ActiveDocument = t.Result;
-                                    desktop.MainWindow.BringIntoView();
-                                });
+                            var file = fileArgs.Files.OfType<IStorageFile>().First();
+                            var document = await PlotScriptDocument.LoadFileAsync(file);
+                            var viewModel = (MainWindowViewModel)desktop.MainWindow.DataContext;
+                            
+                            viewModel.ActiveDocument = document;
+                            desktop.MainWindow.BringIntoView();
                             break;
                     }
                 };

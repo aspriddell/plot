@@ -4,7 +4,7 @@ build_and_notarize() {
   local version=$3
 
   rm -rf Plot.app
-  rm -f Plot.app.zip
+  rm -f Plot.app.$suffix.zip
 
   # prepare the app bundle
   mkdir -p Plot.app/Contents/MacOS
