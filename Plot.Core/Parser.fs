@@ -55,14 +55,9 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
                                    (tLst, negateValue tVal)
 
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
-        | TokenType.Identifier name :: LPar :: tail ->
-            match fnContainer.FunctionTable.TryGetValue(name) with
-            | true, _ -> FnCall(name, tail)
-            | _ -> raise (FunctionNotFoundError name)
-        | TokenType.Identifier name :: tail ->
-            match symbolTable.TryGetValue(name) with
-            | true, value -> (tail, value)
-            | _ -> raise (VariableError($"'{name}' is not defined", name))
+        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> (tail, symbolTable[name])
+        | TokenType.Identifier name :: tail when fnContainer.FunctionTable.ContainsKey(name) -> FnCall name tail
+        | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
 
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
                                     match tLst with
@@ -70,7 +65,7 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
-    and FnCall(name: string, tList: TokenType list) =
+    and FnCall name tList =
         let rec parseArgs tList acc =
             match tList with
             | TokenType.RPar :: tail -> (tail, List.rev acc)
@@ -80,9 +75,9 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
                 | TokenType.Comma :: tail -> parseArgs tail (result :: acc)
                 | TokenType.RPar :: tail -> (tail, List.rev (result :: acc))
                 | _ -> raise (ParserError "Expected ',' or ')' in function call arguments.")
-        let remaining, args = parseArgs tList []
-        let fn = fnContainer.FunctionTable[name]
-        let result = fn args
+        // skip needed to skip initial opening parenthesis
+        let remaining, args = parseArgs (List.skip 1 tList) []
+        let result = fnContainer.FunctionTable[name] args
         (remaining, result)
     and Arguments tList =
         match tList with
