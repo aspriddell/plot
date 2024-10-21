@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Compile Include="Functions\Trig.fs" />
+    <Compile Include="Functions\Base.fs" />
   </ItemGroup>
 
 </Project>
