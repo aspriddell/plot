@@ -33,6 +33,17 @@ public class PlotScriptDocument
     }
 
     /// <summary>
+    /// The filename (without path).
+    /// If no file is loaded, will return <c>null</c>
+    /// </summary>
+    public string FileName => _file?.Name;
+
+    /// <summary>
+    /// Gets whether the current <see cref="PlotScriptDocument"/> is backed by persistent storage
+    /// </summary>
+    public bool IsBackedByFile => _file != null;
+
+    /// <summary>
     /// Gets the source text (script)
     /// </summary>
     public string SourceText
