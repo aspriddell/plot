@@ -27,6 +27,10 @@ public class PlotScriptDocument
     private string _sourceText;
     private FSharpList<TokenType> _cachedLexerOutput;
 
+    public PlotScriptDocument()
+    {
+    }
+
     private PlotScriptDocument(IStorageFile file)
     {
         _file = file;
@@ -36,7 +40,7 @@ public class PlotScriptDocument
     /// The filename (without path).
     /// If no file is loaded, will return <c>null</c>
     /// </summary>
-    public string FileName => _file?.Name;
+    public string FileName => _file?.Name ?? $"Untitled{DefaultFileExtension}";
 
     /// <summary>
     /// Gets whether the current <see cref="PlotScriptDocument"/> is backed by persistent storage
@@ -72,9 +76,17 @@ public class PlotScriptDocument
         return Parser.ParseAndEval(_cachedLexerOutput, symbolTable, PlotScriptFunctionContainer.Default);
     }
 
-    public async Task SaveDocument(IStorageFile saveAs = null)
+    public async Task SaveDocument(string newText = null, IStorageFile saveAs = null)
     {
-        _file = saveAs;
+        if (saveAs != null)
+        {
+            _file = saveAs;
+        }
+
+        if (!string.IsNullOrEmpty(newText))
+        {
+            SourceText = newText;
+        }
         
         if (_file == null)
         {
@@ -95,7 +107,7 @@ public class PlotScriptDocument
     /// <summary>
     /// Creates a <see cref="PlotScriptDocument"/> from a file.
     /// </summary>
-    public static async Task<PlotScriptDocument> FromFile(IStorageFile file)
+    public static async Task<PlotScriptDocument> LoadFileAsync(IStorageFile file)
     {
         using var reader = new StreamReader(await file.OpenReadAsync(), DocumentEncoding);
         var document = new PlotScriptDocument(file)

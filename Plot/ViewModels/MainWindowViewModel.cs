@@ -13,6 +13,7 @@ using Avalonia.Collections;
 using Avalonia.Platform.Storage;
 using AvaloniaEdit.Document;
 using Plot.Core;
+using Plot.Models;
 using ReactiveUI;
 
 namespace Plot.ViewModels;
@@ -25,16 +26,12 @@ public class MainWindowViewModel : ReactiveObject
         Patterns = ["*.plotscript"],
         MimeTypes = ["text/plain"]
     };
-
-    private readonly ObservableAsPropertyHelper<string> _windowTitle;
-    private readonly ObservableAsPropertyHelper<bool> _fileLoaded;
         
     private IStorageFile _openedFile;
+    private PlotScriptDocument _activeDocument = new();
 
     public MainWindowViewModel()
     {
-        SymbolTable = new AvaloniaDictionary<string, Symbols.SymbolType>();
-
         ClearOutput = ReactiveCommand.Create(ClearOutputImpl);
         SaveOutput = ReactiveCommand.CreateFromTask(SaveOutputImpl);
         CopyOutput = ReactiveCommand.CreateFromTask(CopyOutputImpl);
@@ -47,34 +44,28 @@ public class MainWindowViewModel : ReactiveObject
         SaveFileDialogInteraction = new Interaction<FilePickerSaveOptions, IStorageFile>();
         OpenFileDialogInteraction = new Interaction<FilePickerOpenOptions, IReadOnlyCollection<IStorageFile>>();
 
-        // window title binding
-        this.WhenAnyValue(x => x.OpenedFile)
-            .Select(x => $"{Application.Current!.Name} - {x?.Name ?? "Untitled.plotscript"}")
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .ToProperty(this, x => x.WindowTitle, out _windowTitle);
-
-        this.WhenAnyValue(x => x.OpenedFile)
-            .Select(x => x != null)
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .ToProperty(this, x => x.FileLoaded, out _fileLoaded);
+        this.WhenAnyValue(x => x.ActiveDocument)
+            .Where(x => x != null)
+            .Subscribe(d =>
+            {
+                SourceDocument.Text = d.SourceText ?? "";
+                
+                this.RaisePropertyChanged(nameof(WindowTitle));
+                this.RaisePropertyChanged(nameof(FileLoaded));
+            });
     }
 
-    /// <summary>
-    /// The currently opened file
-    /// </summary>
-    public IStorageFile OpenedFile
-    {
-        get => _openedFile;
-        private set => this.RaiseAndSetIfChanged(ref _openedFile, value);
-    }
-
-    public string WindowTitle => _windowTitle.Value;
-    public bool FileLoaded => _fileLoaded.Value;
+    public string WindowTitle => $"{App.Current.Name} - {ActiveDocument.FileName}";
+    public bool FileLoaded => ActiveDocument?.IsBackedByFile == true;
 
     public TextDocument SourceDocument { get; } = new();
     public TextDocument OutputDocument { get; } = new();
 
-    public IDictionary<string, Symbols.SymbolType> SymbolTable { get; }
+    public PlotScriptDocument ActiveDocument
+    {
+        get => _activeDocument;
+        set => this.RaiseAndSetIfChanged(ref _activeDocument, value);
+    }
 
     public Interaction<string, Unit> CopyToClipboardInteraction { get; }
     public Interaction<FilePickerSaveOptions, IStorageFile> SaveFileDialogInteraction { get; }
@@ -90,7 +81,6 @@ public class MainWindowViewModel : ReactiveObject
 
     private void ClearOutputImpl()
     {
-        SymbolTable.Clear();
         OutputDocument.Text = string.Empty;
     }
         
@@ -148,21 +138,20 @@ public class MainWindowViewModel : ReactiveObject
             return;
         }
 
-        await LoadFileInternal(selectedFiles.Single());
+        ActiveDocument = await PlotScriptDocument.LoadFileAsync(selectedFiles.Single());
     }
 
     private async Task SaveScriptImpl()
     {
-        if (OpenedFile == null)
+        ActiveDocument.SourceText = SourceDocument.Text;
+        
+        if (ActiveDocument.IsBackedByFile)
         {
-            await SaveScriptAsImpl();
+            await ActiveDocument.SaveDocument(SourceDocument.Text);
             return;
         }
-            
-        await using var writeStream = await OpenedFile.OpenWriteAsync();
-        await using var fileWriter = new StreamWriter(writeStream, Encoding.UTF8);
-            
-        await fileWriter.WriteAsync(SourceDocument.Text);
+        
+        await SaveScriptAsImpl();
     }
 
     private async Task SaveScriptAsImpl()
@@ -179,19 +168,10 @@ public class MainWindowViewModel : ReactiveObject
             return;
         }
 
-        OpenedFile = file;
-        await SaveScriptImpl();
-    }
-
-    internal async Task LoadFileInternal(IStorageFile file)
-    {
-        await using (var readStream = await file.OpenReadAsync())
-        using (var fileReader = new StreamReader(readStream, Encoding.UTF8))
-        {
-            SourceDocument.Text = await fileReader.ReadToEndAsync();
-        }
-
-        OpenedFile = file;
+        await ActiveDocument.SaveDocument(SourceDocument.Text, file);
+        
+        this.RaisePropertyChanged(nameof(WindowTitle));
+        this.RaisePropertyChanged(nameof(FileLoaded));
     }
         
     public void ExecuteSource()
@@ -203,12 +183,9 @@ public class MainWindowViewModel : ReactiveObject
 
         try
         {
-            var tokenChain = Lexer.Parse(SourceDocument.Text);
-
-            SymbolTable.Clear();
+            ActiveDocument.SourceText = SourceDocument.Text;
             OutputDocument.Insert(OutputDocument.TextLength, $"\n----- RUN {DateTime.Now:G} -----\n\n");
-
-            foreach (var outputToken in Parser.ParseAndEval(tokenChain, SymbolTable, PlotScriptFunctionContainer.Default))
+            foreach (var outputToken in ActiveDocument.ExecuteScript())
             {
                 OutputDocument.Insert(OutputDocument.TextLength, $"> {outputToken}\n");
             }

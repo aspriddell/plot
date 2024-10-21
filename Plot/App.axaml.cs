@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using Plot.Models;
 using Plot.ViewModels;
 
 namespace Plot;
@@ -50,13 +51,17 @@ public partial class App : Application
             // macOS activates the window to open a file
             if (OperatingSystem.IsMacOS() && TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
             {
-                lifetime.Activated += (sender, e) =>
+                lifetime.Activated += (_, e) =>
                 {
                     switch (e)
                     {
                         case FileActivatedEventArgs fileArgs when fileArgs.Files.OfType<IStorageFile>().Any():
-                            desktop.MainWindow.BringIntoView();
-                            (desktop.MainWindow.DataContext as MainWindowViewModel)?.LoadFileInternal(fileArgs.Files.OfType<IStorageFile>().First());
+                            PlotScriptDocument.LoadFileAsync(fileArgs.Files.OfType<IStorageFile>().First())
+                                .ContinueWith(t =>
+                                {
+                                    ((MainWindowViewModel)desktop.MainWindow.DataContext).ActiveDocument = t.Result;
+                                    desktop.MainWindow.BringIntoView();
+                                });
                             break;
                     }
                 };
@@ -74,10 +79,11 @@ public partial class App : Application
     private static async void LoadFileAsync(IStorageProvider storageProvider, string filePath, MainWindowViewModel viewModel)
     {
         var file = await storageProvider.TryGetFileFromPathAsync(filePath);
+        var document = await PlotScriptDocument.LoadFileAsync(file);
 
         if (file != null)
         {
-            await viewModel.LoadFileInternal(file);
+            viewModel.ActiveDocument = document;
         }
     }
 }
