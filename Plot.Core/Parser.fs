@@ -55,10 +55,14 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
                                    (tLst, negateValue tVal)
 
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
+        | TokenType.Identifier name :: LPar :: tail ->
+            match fnContainer.FunctionTable.TryGetValue(name) with
+            | true, _ -> FnCall(name, tail)
+            | _ -> raise (FunctionNotFoundError name)
         | TokenType.Identifier name :: tail ->
             match symbolTable.TryGetValue(name) with
             | true, value -> (tail, value)
-            | _ -> raise (VariableError($"\"{name}\" is not defined", name))
+            | _ -> raise (VariableError($"'{name}' is not defined", name))
 
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
                                     match tLst with
@@ -66,22 +70,20 @@ let public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<string,
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
-    // todo add FnCall handler:
-    // - takes the name and checks it against the function table
-    // - if the function is not found, raise an error
-    // - if the function is found, evaluate the arguments and pass them to the function via FnCallExec
-    // - maybe move FnCallExec as nested function?
-    and FnCallExec(name: string, tList: TokenType list) =
-        // evaluate each set of args in the function call before passing them to the final function
-        let processedArgs = TokenUtils.splitTokenArguments tList |> List.map Expr
-
-        // ensure all tokens were processed
-        if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
-            raise (ParserError "Function call failed")
-        else
-            // perform the function call with the args, and continue execution
-            let args = processedArgs |> List.map snd
-            (tList, fnContainer.FunctionTable[name] args)
+    and FnCall(name: string, tList: TokenType list) =
+        let rec parseArgs tList acc =
+            match tList with
+            | TokenType.RPar :: tail -> (tail, List.rev acc)
+            | _ ->
+                let (remaining, result) = Expr tList
+                match remaining with
+                | TokenType.Comma :: tail -> parseArgs tail (result :: acc)
+                | TokenType.RPar :: tail -> (tail, List.rev (result :: acc))
+                | _ -> raise (ParserError "Expected ',' or ')' in function call arguments.")
+        let remaining, args = parseArgs tList []
+        let fn = fnContainer.FunctionTable[name]
+        let result = fn args
+        (remaining, result)
     and Arguments tList =
         match tList with
         | [] -> (tList, [])
