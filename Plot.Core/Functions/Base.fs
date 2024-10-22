@@ -11,5 +11,5 @@ let public pow (x: SymbolType list) : SymbolType =
     | [ Float f; Int i ] -> Float(f ** float i)
     | [ Float f1; Float f2 ] -> Float(f1 ** f2)
 
-    | [ _; _ ] -> invalidOp "pown not defined for the given types"
-    | _ -> invalidArg "*" "pown expects two arguments"
+    | [ _; _ ] -> invalidOp "pow not defined for the given types"
+    | _ -> invalidArg "*" "pow expects two arguments"

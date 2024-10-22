@@ -24,7 +24,7 @@ let public degToRad (x: SymbolType list): SymbolType =
     | Int i -> Float(float i * Math.PI / 180.0)
     | Float f -> Float(f * Math.PI / 180.0)
 
-    | _ -> invalidOp "DegToRad not defined for the given type"
+    | _ -> invalidOp "Deg2Rad not defined for the given type"
     
 [<PlotScriptFunction("rad2deg")>]
 let public radToDeg (x: SymbolType list): SymbolType =
@@ -32,7 +32,7 @@ let public radToDeg (x: SymbolType list): SymbolType =
     | Int i -> Float(float i * 180.0 / Math.PI)
     | Float f -> Float(f * 180.0 / Math.PI)
 
-    | _ -> invalidOp "RadToDeg not defined for the given type"
+    | _ -> invalidOp "Rad2Deg not defined for the given type"
         
 [<PlotScriptFunction("sin")>]
 let public sin (x: SymbolType list): SymbolType =
