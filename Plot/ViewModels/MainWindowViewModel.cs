@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reactive;
@@ -12,8 +13,12 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Platform.Storage;
 using AvaloniaEdit.Document;
+using DynamicData;
+using DynamicData.Binding;
+using FluentAvalonia.Core;
 using Plot.Core;
 using Plot.Models;
+using Plot.Views;
 using ReactiveUI;
 
 namespace Plot.ViewModels;
@@ -26,46 +31,64 @@ public class MainWindowViewModel : ReactiveObject
         Patterns = ["*.plotscript"],
         MimeTypes = ["text/plain"]
     };
-        
-    private IStorageFile _openedFile;
-    private PlotScriptDocument _activeDocument = new();
+    
+    private DocumentEditorViewModel _activeEditor;
 
     public MainWindowViewModel()
     {
-        ClearOutput = ReactiveCommand.Create(ClearOutputImpl);
-        SaveOutput = ReactiveCommand.CreateFromTask(SaveOutputImpl);
-        CopyOutput = ReactiveCommand.CreateFromTask(CopyOutputImpl);
+        var editorSelected = this.WhenAnyValue(x => x.ActiveEditor)
+            .Select(x => x != null)
+            .ObserveOn(RxApp.MainThreadScheduler);
+        
+        ClearOutput = ReactiveCommand.Create(ClearOutputImpl, editorSelected);
+        SaveOutput = ReactiveCommand.CreateFromTask(SaveOutputImpl, editorSelected);
+        CopyOutput = ReactiveCommand.CreateFromTask(CopyOutputImpl, editorSelected);
             
         OpenScript = ReactiveCommand.CreateFromTask(OpenScriptImpl);
-        SaveScript = ReactiveCommand.CreateFromTask(SaveScriptImpl);
-        SaveScriptAs = ReactiveCommand.CreateFromTask(SaveScriptAsImpl);
+        SaveScript = ReactiveCommand.CreateFromTask(SaveScriptImpl, editorSelected);
+        SaveScriptAs = ReactiveCommand.CreateFromTask(SaveScriptAsImpl, editorSelected);
+        
+        ExecuteActiveScript = ReactiveCommand.Create(() => ActiveEditor?.ExecuteScript(), editorSelected);
 
+        NewEditor = ReactiveCommand.Create(() => AddEditor(new DocumentEditorViewModel()));
+        CloseEditor = ReactiveCommand.CreateFromTask<DocumentEditorViewModel>(CloseEditorImpl, editorSelected);
+        
         CopyToClipboardInteraction = new Interaction<string, Unit>();
         SaveFileDialogInteraction = new Interaction<FilePickerSaveOptions, IStorageFile>();
         OpenFileDialogInteraction = new Interaction<FilePickerOpenOptions, IReadOnlyCollection<IStorageFile>>();
 
-        this.WhenAnyValue(x => x.ActiveDocument)
-            .Where(x => x != null)
-            .Subscribe(d =>
+        this.WhenAnyValue(x => x.ActiveEditor)
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(_ =>
             {
-                SourceDocument.Text = d.SourceText ?? "";
-                
-                this.RaisePropertyChanged(nameof(WindowTitle));
                 this.RaisePropertyChanged(nameof(FileLoaded));
+                this.RaisePropertyChanged(nameof(WindowTitle));
             });
+
+        OpenEditors.ToObservableChangeSet()
+            .Delay(TimeSpan.FromMilliseconds(10))
+            .Subscribe(c =>
+            {
+                if (c.Adds > 0)
+                {
+                    ActiveEditor = c.First(x => x.Reason is ListChangeReason.Add or ListChangeReason.AddRange).Item.Current;
+                }
+            });
+        
+        OpenEditors.Add(new DocumentEditorViewModel());
     }
 
-    public string WindowTitle => $"{App.Current.Name} - {ActiveDocument.FileName}";
-    public bool FileLoaded => ActiveDocument?.IsBackedByFile == true;
+    // these aren't reactive because they need manual handling (i.e. PropertyChanged)
+    public string WindowTitle => ActiveEditor == null ? App.Current.Name : $"{App.Current.Name} - {ActiveEditor.Document.FileName}";
+    public bool FileLoaded => ActiveEditor?.Document.IsBackedByFile == true;
 
-    public TextDocument SourceDocument { get; } = new();
-    public TextDocument OutputDocument { get; } = new();
-
-    public PlotScriptDocument ActiveDocument
+    public DocumentEditorViewModel ActiveEditor
     {
-        get => _activeDocument;
-        set => this.RaiseAndSetIfChanged(ref _activeDocument, value);
+        get => _activeEditor;
+        set => this.RaiseAndSetIfChanged(ref _activeEditor, value);
     }
+
+    public ObservableCollection<DocumentEditorViewModel> OpenEditors { get; } = [];
 
     public Interaction<string, Unit> CopyToClipboardInteraction { get; }
     public Interaction<FilePickerSaveOptions, IStorageFile> SaveFileDialogInteraction { get; }
@@ -78,15 +101,20 @@ public class MainWindowViewModel : ReactiveObject
     public ICommand OpenScript { get; }
     public ICommand SaveScript { get; }
     public ICommand SaveScriptAs { get; }
+    
+    public ICommand ExecuteActiveScript { get; }
 
+    public ICommand NewEditor { get; }
+    public ICommand CloseEditor { get; }
+    
     private void ClearOutputImpl()
     {
-        OutputDocument.Text = string.Empty;
+        ActiveEditor.OutputDocument.Text = string.Empty;
     }
         
     private async Task CopyOutputImpl()
     {
-        await CopyToClipboardInteraction.Handle(OutputDocument.Text).ToTask();
+        await CopyToClipboardInteraction.Handle(ActiveEditor.OutputDocument.Text).ToTask();
     }
 
     private async Task SaveOutputImpl()
@@ -115,7 +143,7 @@ public class MainWindowViewModel : ReactiveObject
         await using var writeStream = await file.OpenWriteAsync();
         await using var fileWriter = new StreamWriter(writeStream, Encoding.UTF8);
 
-        await fileWriter.WriteAsync(OutputDocument.Text);
+        await fileWriter.WriteAsync(ActiveEditor.OutputDocument.Text);
     }
 
     private async Task OpenScriptImpl()
@@ -138,16 +166,20 @@ public class MainWindowViewModel : ReactiveObject
             return;
         }
 
-        ActiveDocument = await PlotScriptDocument.LoadFileAsync(selectedFiles.Single());
+        var document = await PlotScriptDocument.LoadFileAsync(selectedFiles.Single());
+        if (OpenEditors.Count == 0 && OpenEditors.Single().SourceDocument.TextLength == 0 && !OpenEditors.Single().Document.IsBackedByFile)
+        {
+            OpenEditors.Clear();
+        }
+
+        AddEditor(new DocumentEditorViewModel(document));
     }
 
     private async Task SaveScriptImpl()
     {
-        ActiveDocument.SourceText = SourceDocument.Text;
-        
-        if (ActiveDocument.IsBackedByFile)
+        if (ActiveEditor.Document.IsBackedByFile)
         {
-            await ActiveDocument.SaveDocument(SourceDocument.Text);
+            await ActiveEditor.SaveDocument();
             return;
         }
         
@@ -168,35 +200,32 @@ public class MainWindowViewModel : ReactiveObject
             return;
         }
 
-        await ActiveDocument.SaveDocument(SourceDocument.Text, file);
-        
+        await ActiveEditor.SaveDocument(file);
+
         this.RaisePropertyChanged(nameof(WindowTitle));
         this.RaisePropertyChanged(nameof(FileLoaded));
     }
-        
-    public void ExecuteSource()
-    {
-        if (SourceDocument.TextLength == 0 || string.IsNullOrWhiteSpace(SourceDocument.Text))
-        {
-            return;
-        }
 
-        try
+    internal void AddEditor(DocumentEditorViewModel editor)
+    {
+        if (OpenEditors.Contains(editor))
         {
-            ActiveDocument.SourceText = SourceDocument.Text;
-            OutputDocument.Insert(OutputDocument.TextLength, $"\n----- RUN {DateTime.Now:G} -----\n\n");
-            foreach (var outputToken in ActiveDocument.ExecuteScript())
-            {
-                OutputDocument.Insert(OutputDocument.TextLength, $"> {outputToken}\n");
-            }
+            throw new InvalidOperationException("Duplicates not allowed");
         }
-        catch (Lexer.LexerException e)
+        
+        OpenEditors.Add(editor);
+        Task.Delay(50).ContinueWith(_ => ActiveEditor = editor);
+    }
+
+    private async Task CloseEditorImpl(DocumentEditorViewModel e)
+    {
+        if (ActiveEditor == e)
         {
-            OutputDocument.Insert(OutputDocument.TextLength, $"\n----- {e.Message} -----\n");
+            ActiveEditor = OpenEditors.LastOrDefault(x => x != e);
+            await Task.Delay(325);
         }
-        catch (Exception e)
-        {
-            OutputDocument.Insert(OutputDocument.TextLength, $"\n----- Unexpected error: {e.Message} -----\n");
-        }
+        
+        OpenEditors.Remove(e);
+        e.Dispose();
     }
 }

@@ -56,12 +56,11 @@ public partial class App : Application
                     switch (e)
                     {
                         case FileActivatedEventArgs fileArgs when fileArgs.Files.OfType<IStorageFile>().Any():
-                            var file = fileArgs.Files.OfType<IStorageFile>().First();
-                            var document = await PlotScriptDocument.LoadFileAsync(file);
                             var viewModel = (MainWindowViewModel)desktop.MainWindow.DataContext;
+                            var document = await PlotScriptDocument.LoadFileAsync(fileArgs.Files.OfType<IStorageFile>().First());
                             
-                            viewModel.ActiveDocument = document;
                             desktop.MainWindow.BringIntoView();
+                            viewModel.AddEditor(new DocumentEditorViewModel(document));
                             break;
                     }
                 };
@@ -79,11 +78,12 @@ public partial class App : Application
     private static async void LoadFileAsync(IStorageProvider storageProvider, string filePath, MainWindowViewModel viewModel)
     {
         var file = await storageProvider.TryGetFileFromPathAsync(filePath);
-        var document = await PlotScriptDocument.LoadFileAsync(file);
-
-        if (file != null)
+        if (file == null)
         {
-            viewModel.ActiveDocument = document;
+            return;
         }
+
+        var document = await PlotScriptDocument.LoadFileAsync(file);
+        viewModel.AddEditor(new DocumentEditorViewModel(document));
     }
 }

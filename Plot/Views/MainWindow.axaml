@@ -4,8 +4,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Plot.ViewModels"
-    xmlns:avaloniaEdit="using:AvaloniaEdit"
     xmlns:plot="clr-namespace:Plot"
+    xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+    xmlns:views="clr-namespace:Plot.Views"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="Plot.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
@@ -16,21 +17,30 @@
         <NativeMenu>
             <NativeMenuItem Header="_File">
                 <NativeMenu>
-                    <NativeMenuItem Header="_Open"
+                    <NativeMenuItem Header="_New Script"
+                                    Command="{Binding NewEditor}"
+                                    Gesture="{OnPlatform Ctrl+N, macOS=Cmd+N}"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="_Open Script..."
                                     Command="{Binding OpenScript}"
                                     Gesture="{OnPlatform Ctrl+O, macOS=Cmd+O}" />
-                    <NativeMenuItem Header="_Save"
+                    <NativeMenuItem Header="_Save Script"
                                     Command="{Binding SaveScript}"
                                     Gesture="{OnPlatform Ctrl+S, macOS=Cmd+S}" />
-                    <NativeMenuItem Header="_Save As"
+                    <NativeMenuItem Header="_Save Script As..."
                                     Command="{Binding SaveScriptAs}"
                                     Gesture="{OnPlatform Ctrl+Shift+S, macOS=Cmd+Shift+S}" />
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="_Close Active Editor"
+                                    Command="{Binding CloseEditor}"
+                                    CommandParameter="{Binding ActiveEditor}"
+                                    Gesture="{OnPlatform Ctrl+W, macOS=Cmd+W}"/>
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="_Run">
                 <NativeMenu>
                     <NativeMenuItem Header="Execute Script"
-                                    Command="{Binding ExecuteSource}"
+                                    Command="{Binding ExecuteActiveScript}"
                                     Gesture="{OnPlatform Ctrl+Enter, macOS=Cmd+Enter}" />
                 </NativeMenu>
             </NativeMenuItem>
@@ -66,33 +76,28 @@
                 <StackPanel DockPanel.Dock="{OnPlatform Bottom, Windows=Top}" Orientation="Horizontal" Spacing="5" Margin="{OnPlatform 10, Windows='20,0,0,0'}" IsVisible="{OnPlatform {x:True}, macOS={x:False}}">
                     <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{Binding Name, Source={x:Static Application.Current}}" />
                     <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" IsVisible="{Binding !FileLoaded}" Content="{x:Static plot:App.Version}" />
-                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#0048ba" IsVisible="{Binding FileLoaded}" Content="{Binding ActiveDocument.FileName}" />
+                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="CornflowerBlue" IsVisible="{Binding FileLoaded}" Content="{Binding ActiveEditor.Document.FileName}" />
 
                     <NativeMenuBar Margin="5,0,0,0" />
                 </StackPanel>
 
-                <Grid DockPanel.Dock="Top" RowDefinitions="1.5*, 1, *" Margin="10,0">
-                    <avaloniaEdit:TextEditor Grid.Row="0"
-                                             ShowLineNumbers="True"
-                                             Margin="0,15"
-                                             Document="{Binding SourceDocument, Mode=OneWay}"
-                                             FontFamily="{StaticResource JetBrainsMono}"
-                                             HorizontalScrollBarVisibility="Auto"
-                                             VerticalScrollBarVisibility="Visible"
-                                             FontSize="16" />
-
-                    <GridSplitter Grid.Row="1" Background="DodgerBlue" Height="0" BorderThickness="1" ResizeDirection="Rows" />
-
-                    <avaloniaEdit:TextEditor Grid.Row="2"
-                                             Margin="0,15"
-                                             IsReadOnly="True"
-                                             ShowLineNumbers="False"
-                                             Document="{Binding OutputDocument, Mode=OneWay}"
-                                             FontFamily="{StaticResource JetBrainsMono}"
-                                             HorizontalScrollBarVisibility="Auto"
-                                             VerticalScrollBarVisibility="Visible"
-                                             FontSize="14" />
-                </Grid>
+                <controls:NavigationView DockPanel.Dock="Top"
+                                         PaneDisplayMode="Top"
+                                         IsSettingsVisible="False"
+                                         MenuItemsSource="{Binding OpenEditors}"
+                                         SelectedItem="{Binding ActiveEditor}"
+                                         Content="{Binding ActiveEditor}">
+                    <controls:NavigationView.MenuItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:DocumentEditorViewModel}">
+                            <controls:NavigationViewItem Content="{Binding FileName}" />
+                        </DataTemplate>
+                    </controls:NavigationView.MenuItemTemplate>
+                    <controls:NavigationView.ContentTemplate>
+                        <DataTemplate DataType="{x:Type vm:DocumentEditorViewModel}">
+                            <views:DocumentEditorView DataContext="{Binding}"/>
+                        </DataTemplate>
+                    </controls:NavigationView.ContentTemplate>
+                </controls:NavigationView>
             </DockPanel>
         </Panel>
     </Window.Content>

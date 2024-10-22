@@ -9,7 +9,7 @@ using Plot.Core;
 
 namespace Plot.Models;
 
-public class PlotScriptDocument
+public class PlotScriptDocument : IDisposable
 {
     /// <summary>
     /// Default file extension for plotscript documents
@@ -37,8 +37,7 @@ public class PlotScriptDocument
     }
 
     /// <summary>
-    /// The filename (without path).
-    /// If no file is loaded, will return <c>null</c>
+    /// The filename (without path)
     /// </summary>
     public string FileName => _file?.Name ?? $"Untitled{DefaultFileExtension}";
 
@@ -76,16 +75,11 @@ public class PlotScriptDocument
         return Parser.ParseAndEval(_cachedLexerOutput, symbolTable, PlotScriptFunctionContainer.Default);
     }
 
-    public async Task SaveDocument(string newText = null, IStorageFile saveAs = null)
+    public async Task SaveDocument(IStorageFile saveAs = null)
     {
         if (saveAs != null)
         {
             _file = saveAs;
-        }
-
-        if (!string.IsNullOrEmpty(newText))
-        {
-            SourceText = newText;
         }
         
         if (_file == null)
@@ -116,5 +110,10 @@ public class PlotScriptDocument
         };
 
         return document;
+    }
+
+    public void Dispose()
+    {
+        _file?.Dispose();
     }
 }
