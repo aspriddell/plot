@@ -59,9 +59,10 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
 
         // feature: if there's a method like pi(), you can reassign it because symbols are checked before functions
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
+        | [TokenType.Identifier name] when symbolTable.ContainsKey(name) -> ([], symbolTable[name])
         | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->
             match symbolTable[name] with
-            | SymbolType.PlotScriptFunction func -> FnCall (fun (f, _) -> func(f)) tail
+            | SymbolType.PlotScriptFunction (func, _) when tail.Head = LPar -> FnCall (fun (f, _) -> func(f)) tail
             | _ -> (tail, symbolTable[name])
         | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> FnCall fnContainer.FunctionTable[name] tail
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
@@ -95,7 +96,7 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
                 Seq.zip TokenUtils.asciiVariableSequence inputs |> Seq.iter (fun (k, v) -> fnSymbolTable[k] <- v)
                 ParseAndEval(fnTokens, fnSymbolTable, fnContainer) |> Seq.exactlyOne
 
-            let callable = SymbolType.PlotScriptFunction fnCallback
+            let callable = SymbolType.PlotScriptFunction (fnCallback, fnTokens)
 
             symbolTable[name] <- callable
             (remaining, callable)

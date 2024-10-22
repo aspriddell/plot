@@ -5,12 +5,21 @@ open System
 type SymbolType =
     | Int of int
     | Float of float
-    // takes a symbol and computes a new symbol
-    // i.e. f(2 * x + 1), passing in Int(3) would produce Int(7)
-    | PlotScriptFunction of (SymbolType list -> SymbolType) 
+
+    /// <summary>
+    /// Represents a function that takes a list of symbols and produces an output.
+    /// The "source" tokens are also provided for advanced processing.
+    /// </summary>
+    | PlotScriptFunction of ((SymbolType list -> SymbolType) * TokenType list)
+    
+    /// <summary>
+    /// Represents a function that is used with a graph to plot something.
+    /// </summary>
+    | PlotScriptGraphingFunction of (SymbolType list -> SymbolType)
 
 let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with
+    | PlotScriptGraphingFunction _ -> false
     | _ -> true
     
 let internal negateValue (v: SymbolType): SymbolType =
