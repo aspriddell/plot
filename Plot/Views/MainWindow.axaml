@@ -32,8 +32,7 @@
                                     Gesture="{OnPlatform Ctrl+Shift+S, macOS=Cmd+Shift+S}" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="_Close Active Editor"
-                                    Command="{Binding CloseEditor}"
-                                    CommandParameter="{Binding ActiveEditor}"
+                                    Command="{Binding CloseActiveEditor}"
                                     Gesture="{OnPlatform Ctrl+W, macOS=Cmd+W}"/>
                 </NativeMenu>
             </NativeMenuItem>
@@ -75,8 +74,7 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="{OnPlatform Bottom, Windows=Top}" Orientation="Horizontal" Spacing="5" Margin="{OnPlatform 10, Windows='20,0,0,0'}" IsVisible="{OnPlatform {x:True}, macOS={x:False}}">
                     <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{Binding Name, Source={x:Static Application.Current}}" />
-                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" IsVisible="{Binding !FileLoaded}" Content="{x:Static plot:App.Version}" />
-                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="CornflowerBlue" IsVisible="{Binding FileLoaded}" Content="{Binding ActiveEditor.Document.FileName}" />
+                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="#de3163" Content="{x:Static plot:App.Version}" />
 
                     <NativeMenuBar Margin="5,0,0,0" />
                 </StackPanel>

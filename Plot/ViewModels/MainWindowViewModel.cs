@@ -51,7 +51,8 @@ public class MainWindowViewModel : ReactiveObject
         ExecuteActiveScript = ReactiveCommand.Create(() => ActiveEditor?.ExecuteScript(), editorSelected);
 
         NewEditor = ReactiveCommand.Create(() => AddEditor(new DocumentEditorViewModel(), false));
-        CloseEditor = ReactiveCommand.CreateFromTask<DocumentEditorViewModel>(CloseEditorImpl, editorSelected);
+
+        CloseActiveEditor = ReactiveCommand.Create(() => CloseEditorImpl(ActiveEditor), editorSelected);
         
         CopyToClipboardInteraction = new Interaction<string, Unit>();
         SaveFileDialogInteraction = new Interaction<FilePickerSaveOptions, IStorageFile>();
@@ -110,8 +111,8 @@ public class MainWindowViewModel : ReactiveObject
     public ICommand ExecuteActiveScript { get; }
 
     public ICommand NewEditor { get; }
-    public ICommand CloseEditor { get; }
-    
+    public ICommand CloseActiveEditor { get; }
+
     private void ClearOutputImpl()
     {
         ActiveEditor.OutputDocument.Text = string.Empty;
