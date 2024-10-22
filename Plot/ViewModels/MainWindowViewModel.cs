@@ -84,7 +84,7 @@ public class MainWindowViewModel : ReactiveObject
     }
 
     // these aren't reactive because they need manual handling (i.e. PropertyChanged)
-    public string WindowTitle => ActiveEditor == null ? App.Current.Name : $"{App.Current.Name} - {ActiveEditor.Document.FileName}";
+    public string WindowTitle => ActiveEditor == null ? $"{App.Current.Name} {App.Version}" : $"{App.Current.Name} - {ActiveEditor.Document.FileName}";
     public bool FileLoaded => ActiveEditor?.Document.IsBackedByFile == true;
 
     public DocumentEditorViewModel ActiveEditor
