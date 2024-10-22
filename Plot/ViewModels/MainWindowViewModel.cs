@@ -50,7 +50,7 @@ public class MainWindowViewModel : ReactiveObject
         
         ExecuteActiveScript = ReactiveCommand.Create(() => ActiveEditor?.ExecuteScript(), editorSelected);
 
-        NewEditor = ReactiveCommand.Create(() => AddEditor(new DocumentEditorViewModel()));
+        NewEditor = ReactiveCommand.Create(() => AddEditor(new DocumentEditorViewModel(), false));
         CloseEditor = ReactiveCommand.CreateFromTask<DocumentEditorViewModel>(CloseEditorImpl, editorSelected);
         
         CopyToClipboardInteraction = new Interaction<string, Unit>();
@@ -72,6 +72,11 @@ public class MainWindowViewModel : ReactiveObject
                 if (c.Adds > 0)
                 {
                     ActiveEditor = c.First(x => x.Reason is ListChangeReason.Add or ListChangeReason.AddRange).Item.Current;
+                }
+
+                foreach (var removal in c.Where(x => x.Reason is ListChangeReason.Remove or ListChangeReason.RemoveRange))
+                {
+                    removal.Item.Current.Dispose();
                 }
             });
         
@@ -206,15 +211,21 @@ public class MainWindowViewModel : ReactiveObject
         this.RaisePropertyChanged(nameof(FileLoaded));
     }
 
-    internal void AddEditor(DocumentEditorViewModel editor)
+    internal void AddEditor(DocumentEditorViewModel editor, bool allowClosingEmpty = true)
     {
         if (OpenEditors.Contains(editor))
         {
             throw new InvalidOperationException("Duplicates not allowed");
         }
-        
+
         OpenEditors.Add(editor);
         Task.Delay(50).ContinueWith(_ => ActiveEditor = editor);
+
+        if (allowClosingEmpty && !ActiveEditor.IsModified && !ActiveEditor.Document.IsBackedByFile)
+        {
+            var target = ActiveEditor;
+            Task.Delay(350).ContinueWith(_ => OpenEditors.Remove(target));
+        }
     }
 
     private async Task CloseEditorImpl(DocumentEditorViewModel e)
@@ -226,6 +237,5 @@ public class MainWindowViewModel : ReactiveObject
         }
         
         OpenEditors.Remove(e);
-        e.Dispose();
     }
 }

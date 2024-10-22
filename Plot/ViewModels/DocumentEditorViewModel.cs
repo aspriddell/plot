@@ -49,7 +49,15 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
         this.WhenAnyValue(x => x.LastSavedVersion)
             .CombineLatest(_modificationSignal.StartWith(Guid.Empty)) // used to trigger forced re-evaluations
             .Throttle(TimeSpan.FromMilliseconds(500))                 // throttle to prevent overly-frequent updates
-            .Select(x => !(x.First?.SequenceEqual(MD5.HashData(Encoding.UTF8.GetBytes(Document.SourceText))) ?? Document.SourceText?.Length == 0))
+            .Select(x =>
+            {
+                if (x.First != null)
+                {
+                    return !x.First.SequenceEqual(MD5.HashData(Encoding.UTF8.GetBytes(Document.SourceText)));
+                }
+
+                return Document.SourceText?.Length > 0;
+            })
             .ObserveOn(RxApp.MainThreadScheduler)
             .ToProperty(this, x => x.IsModified, out _sourceModified);
 
