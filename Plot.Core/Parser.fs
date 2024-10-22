@@ -61,9 +61,9 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
         | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->
             match symbolTable[name] with
-            | SymbolType.PlotScriptFunction func -> FnCall func tail
+            | SymbolType.PlotScriptFunction func -> FnCall (fun (f, _) -> func(f)) tail
             | _ -> (tail, symbolTable[name])
-        | TokenType.Identifier name :: tail when fnContainer.FunctionTable.ContainsKey(name) -> FnCall fnContainer.FunctionTable[name] tail
+        | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> FnCall fnContainer.FunctionTable[name] tail
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
 
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
@@ -79,9 +79,9 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
                 if processedArgs |> List.exists (fun (remaining, _) -> remaining.Length > 0) then
                     raise (ParserError "Function call failed")
 
-                func (processedArgs |> List.map snd)
+                func (processedArgs |> List.map snd, symbolTable)
             else
-                func []
+                func ([], symbolTable)
 
         let (fnCallTokens, remaining) = TokenUtils.extractFnCallTokens tList
         (remaining, FnCallExec fnCallTokens)
@@ -92,7 +92,7 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
             let (fnTokens, remaining) = TokenUtils.extractFnCallTokens tail
             let fnCallback = fun inputs ->
                 let fnSymbolTable = Dictionary<string, SymbolType>(symbolTable)
-                Seq.zip TokenUtils.asciiVariableSequence inputs |> Seq.iter fnSymbolTable.Add
+                Seq.zip TokenUtils.asciiVariableSequence inputs |> Seq.iter (fun (k, v) -> fnSymbolTable[k] <- v)
                 ParseAndEval(fnTokens, fnSymbolTable, fnContainer) |> Seq.exactlyOne
 
             let callable = SymbolType.PlotScriptFunction fnCallback

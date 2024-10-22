@@ -9,20 +9,31 @@ open Plot.Core.Symbols
 type public PlotScriptFunctionAttribute(identifier: string) =
     inherit Attribute()
 
+    let mutable injectSymbolTable = false
+
     /// <summary>
     /// The identifier of the function.
     /// Used to call the function from a script.
     /// </summary>
     member this.Identifier = identifier
 
+    member this.InjectSymbolTable
+        with get() = injectSymbolTable
+        and set(value) = injectSymbolTable <- value
+
 type public PlotScriptFunctionContainer() =
-    let functions = Dictionary<string, SymbolType list -> SymbolType>(StringComparer.OrdinalIgnoreCase)
+    let functions = Dictionary<string, SymbolType list * IDictionary<string, SymbolType> -> SymbolType>(StringComparer.OrdinalIgnoreCase)
     let processAssembly (assembly: Assembly): unit =
         for method in assembly.GetTypes() |> Seq.collect (_.GetMethods()) |> Seq.filter (_.IsStatic) do
             let attributes = method.GetCustomAttributes(typeof<PlotScriptFunctionAttribute>, false)
             for attribute in attributes do
                 let functionAttribute = attribute :?> PlotScriptFunctionAttribute
-                functions.Add(functionAttribute.Identifier, fun args -> method.Invoke(null, [|args|]) :?> SymbolType)
+                let fnCall = if functionAttribute.InjectSymbolTable then
+                                fun (args, symTable) -> method.Invoke(null, [|args; symTable|]) :?> SymbolType
+                             else
+                                fun (args, _) -> method.Invoke(null, [|args|]) :?> SymbolType
+
+                functions.Add(functionAttribute.Identifier, fnCall)
 
     do
         processAssembly typeof<PlotScriptFunctionContainer>.Assembly
@@ -32,5 +43,7 @@ type public PlotScriptFunctionContainer() =
     /// </summary>
     static member Default = PlotScriptFunctionContainer()
 
-    member this.FunctionTable: IReadOnlyDictionary<string, SymbolType list -> SymbolType> = functions
+    member this.FunctionTable: IReadOnlyDictionary<string, SymbolType list * IDictionary<string, SymbolType> -> SymbolType> = functions
+
+    member this.HasFunction (identifier: string): bool = functions.ContainsKey(identifier)
     member this.RegisterAssembly (assembly: Assembly): unit = processAssembly assembly
