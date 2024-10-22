@@ -5,7 +5,7 @@
              xmlns:viewModels="clr-namespace:Plot.ViewModels"
              xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Plot.Views.DocumentEditorView"
+             x:Class="Plot.Views.DocumentEditor"
              x:DataType="viewModels:DocumentEditorViewModel">
     <Grid DockPanel.Dock="Top" RowDefinitions="1.5*, 5, *" Margin="10,0">
         <avaloniaEdit:TextEditor Grid.Row="0"

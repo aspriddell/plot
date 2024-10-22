@@ -1,7 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using Plot.Core;
 using Plot.Models;
@@ -11,6 +17,12 @@ namespace Plot.ViewModels;
 
 public class DocumentEditorViewModel : ReactiveObject, IDisposable
 {
+    private readonly Subject<Guid> _modificationSignal = new();
+    private readonly ObservableAsPropertyHelper<bool> _sourceModified;
+
+    // md5 of the last saved version of the document.
+    // it's not great but the change tracker in the TextDocument can't work out if a series of changes amount to nothing
+    private byte[] _lastSavedVersion; 
     private IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> _graphingFunctions;
 
     public DocumentEditorViewModel()
@@ -23,7 +35,26 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
         Document = document;
 
         SourceDocument.Text = document.SourceText ?? string.Empty;
-        SourceDocument.TextChanged += (sender, args) => document.SourceText = ((TextDocument)sender)!.Text;
+        SourceDocument.TextChanged += (sender, _) =>
+        {
+            document.SourceText = ((TextDocument)sender)!.Text;
+            _modificationSignal.OnNext(Guid.NewGuid());
+        };
+
+        if (Document.IsBackedByFile)
+        {
+            LastSavedVersion = MD5.HashData(Encoding.UTF8.GetBytes(Document.SourceText));
+        }
+
+        this.WhenAnyValue(x => x.LastSavedVersion)
+            .CombineLatest(_modificationSignal.StartWith(Guid.Empty)) // used to trigger forced re-evaluations
+            .Throttle(TimeSpan.FromMilliseconds(500))                 // throttle to prevent overly-frequent updates
+            .Select(x => !(x.First?.SequenceEqual(MD5.HashData(Encoding.UTF8.GetBytes(Document.SourceText))) ?? Document.SourceText?.Length == 0))
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .ToProperty(this, x => x.IsModified, out _sourceModified);
+
+        this.WhenAnyValue(x => x.IsModified)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(TabContent)));
     }
 
     public PlotScriptDocument Document { get; }
@@ -31,7 +62,16 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
     public TextDocument SourceDocument { get; } = new();
     public TextDocument OutputDocument { get; } = new();
 
+    public bool IsModified => _sourceModified.Value;
+
+    private byte[] LastSavedVersion
+    {
+        get => _lastSavedVersion;
+        set => this.RaiseAndSetIfChanged(ref _lastSavedVersion, value);
+    }
+
     public string FileName => Document.FileName;
+    public string TabContent => $"{FileName}{(IsModified ? "*" : string.Empty)}";
 
     public IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphingFunctions
     {
@@ -42,7 +82,9 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
     public async Task SaveDocument(IStorageFile saveAs = null)
     {
         await Document.SaveDocument(saveAs);
+
         this.RaisePropertyChanged(nameof(FileName));
+        LastSavedVersion = MD5.HashData(Encoding.UTF8.GetBytes(Document.SourceText));
     }
 
     public void ExecuteScript()
@@ -54,8 +96,6 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
 
         try
         {
-            Document.SourceText = SourceDocument.Text;
-
             if (OutputDocument.TextLength > 0)
             {
                 OutputDocument.Insert(OutputDocument.TextLength, "\n\n");

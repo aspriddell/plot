@@ -89,12 +89,12 @@
                                          Content="{Binding ActiveEditor}">
                     <controls:NavigationView.MenuItemTemplate>
                         <DataTemplate DataType="{x:Type vm:DocumentEditorViewModel}">
-                            <controls:NavigationViewItem Content="{Binding FileName}" />
+                            <controls:NavigationViewItem Content="{Binding TabContent}" />
                         </DataTemplate>
                     </controls:NavigationView.MenuItemTemplate>
                     <controls:NavigationView.ContentTemplate>
                         <DataTemplate DataType="{x:Type vm:DocumentEditorViewModel}">
-                            <views:DocumentEditorView DataContext="{Binding}"/>
+                            <views:DocumentEditor DataContext="{Binding}"/>
                         </DataTemplate>
                     </controls:NavigationView.ContentTemplate>
                 </controls:NavigationView>
