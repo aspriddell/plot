@@ -4,20 +4,6 @@ open System
 open Plot.Core
 open Plot.Core.Symbols
 
-[<PlotScriptFunction("pi")>]
-let public piConst (x: SymbolType list): SymbolType =
-    if x.Length <> 0 then
-        invalidArg "pi" "Pi expects no arguments"
-    else
-        Float(Math.PI)
-
-[<PlotScriptFunction("tau")>]
-let public tauConst (x: SymbolType list): SymbolType =
-    if x.Length <> 0 then
-        invalidArg "tau" "Tau expects no arguments"
-    else
-        Float(Math.Tau)
-
 [<PlotScriptFunction("deg2rad")>]
 let public degToRad (x: SymbolType list): SymbolType =
     match x |> Seq.exactlyOne with
