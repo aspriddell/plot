@@ -10,6 +10,7 @@
         <TrimMode>full</TrimMode>
         <UseAppHost>true</UseAppHost>
         <PublishTrimmed>true</PublishTrimmed>
+        <PublishSingleFile>true</PublishSingleFile>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <EnableUnsafeUTF7Encoding>False</EnableUnsafeUTF7Encoding>
         <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
@@ -19,9 +20,9 @@
         <EnableUnsafeBinaryFormatterSerialization>False</EnableUnsafeBinaryFormatterSerialization>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('win-'))">
+    <!-- Publish using R2R when using non Apple Silicon platforms -->
+    <PropertyGroup Condition="'$(RuntimeIdentifier)' != '' and '$(RuntimeIdentifier)' != 'osx-arm64'">
         <PublishReadyToRun>true</PublishReadyToRun>
-        <PublishSingleFile>true</PublishSingleFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,7 +35,6 @@
         <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.1.0"/>
         <PackageReference Include="Avalonia.Desktop" Version="11.1.4" />
         <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.4" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.4" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.4" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.4" />
