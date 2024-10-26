@@ -1,5 +1,6 @@
 module Plot.Core.Functions.Base
 
+open System.Diagnostics
 open Plot.Core
 open Plot.Core.Symbols
 
@@ -13,3 +14,13 @@ let public pow (x: SymbolType list) : SymbolType =
 
     | [ _; _ ] -> invalidOp "pow not defined for the given types"
     | _ -> invalidArg "*" "pow expects two arguments"
+
+[<PlotScriptFunction("roll")>]
+let public rickRoll(_x: SymbolType list): SymbolType =
+    let processStartInfo = ProcessStartInfo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+    processStartInfo.UseShellExecute <- true
+    processStartInfo.Verb <- "open"
+
+    Process.Start(processStartInfo) |> ignore
+    Unit

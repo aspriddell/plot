@@ -123,7 +123,11 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
                         break;
 
                     default:
-                        OutputDocument.Insert(OutputDocument.TextLength, $"\n> {outputToken}");
+                        if (!outputToken.IsUnit)
+                        {
+                            OutputDocument.Insert(OutputDocument.TextLength, $"\n> {outputToken}");
+                        }
+
                         break;
                 }
             }

@@ -3,6 +3,7 @@
 open System
 
 type SymbolType =
+    | Unit
     | Int of int
     | Float of float
 
@@ -19,6 +20,7 @@ type SymbolType =
 
 let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with
+    | Unit
     | PlotScriptGraphingFunction _ -> false
     | _ -> true
     
