@@ -11,7 +11,8 @@ build_and_notarize() {
   cp Info.plist Plot.app/Contents
 
   # build directly into the app bundle
-  dotnet publish -c Release -p:Version=$version --self-contained -r $runtime -o ./Plot.app/Contents/MacOS Plot/Plot.csproj
+  dotnet publish -c Release -p:Version=$version -p:GenerateDocumentationFile=false -p:DebugSymbols=false -p:DebugType=None --self-contained -r $runtime Plot/Plot.csproj
+  mv Plot/bin/Release/net8.0/$runtime/publish/* Plot.app/Contents/MacOS
 
   # perform signing with timestamp
   codesign --sign "Developer ID Application: Albie Spriddell (Q824VHAT9S)" \
