@@ -5,7 +5,7 @@ open Plot.Core
 open Plot.Core.Symbols
 
 [<PlotScriptFunction("plot", InjectSymbolTable = true)>]
-let public createPlottableFunction(input: SymbolType list, symTable: IDictionary<string, SymbolType>): SymbolType =
+let public createPlottableFunction (input: SymbolType list, symTable: IDictionary<string, SymbolType>) : SymbolType =
     match input with
     | [SymbolType.PlotScriptFunction (_, fnTokens)] ->
         let callback = fun (inputs: SymbolType list) ->
