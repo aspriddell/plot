@@ -5,7 +5,7 @@ open System
 type SymbolType =
     | Unit
     | Int of int
-    | Float of float
+    | Float of double
 
     /// <summary>
     /// Represents a function that takes a list of symbols and produces an output.
