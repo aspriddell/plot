@@ -134,7 +134,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
             }
 
             GraphingFunctions = graphingFunctionsList;
-            MessageBus.Current.SendMessage(new PlotFunctionsChangedEvent(GraphingFunctions));
+            MessageBus.Current.SendMessage(new PlotFunctionsChangedEvent(false, GraphingFunctions));
         }
         catch (Lexer.LexerException e)
         {

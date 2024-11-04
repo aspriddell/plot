@@ -7,7 +7,9 @@ using ReactiveUI;
 
 namespace Plot.ViewModels;
 
-public record PlotFunctionsChangedEvent(IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> Functions);
+public record PlotFunctionsChangedEvent(
+    bool TabChanged,
+    IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> Functions);
 
 public class GraphWindowViewModel : ReactiveObject, IDisposable
 {

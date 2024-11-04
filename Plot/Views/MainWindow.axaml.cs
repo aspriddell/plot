@@ -40,7 +40,7 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
             MessageBus.Current.Listen<PlotFunctionsChangedEvent>()
                 .Where(x => x?.Functions?.Count > 0) // ignore all null/empty function lists
                 .ObserveOn(RxApp.MainThreadScheduler) // run on ui thread (using UI calls)
-                .Subscribe(_ => EnsureGraphWindow())
+                .Subscribe(e => EnsureGraphWindow(!e.TabChanged))
                 .DisposeWith(disposables);
         });
     }
@@ -96,7 +96,7 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
         ctx.SetOutput(root);
     }
 
-    private void EnsureGraphWindow()
+    private void EnsureGraphWindow(bool activateWindow = true)
     {
         if (_graphWindow?.PlatformImpl == null)
         {
@@ -119,6 +119,9 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
             _graphWindow.Show();
         }
 
-        _graphWindow.Activate();
+        if (activateWindow)
+        {
+            _graphWindow.Activate();
+        }
     }
 }

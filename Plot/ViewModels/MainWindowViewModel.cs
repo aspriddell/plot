@@ -33,7 +33,6 @@ public class MainWindowViewModel : ReactiveObject
     };
     
     private DocumentEditorViewModel _activeEditor;
-    private IDisposable _activeEditorInteractionHandlers;
 
     public MainWindowViewModel()
     {
@@ -66,10 +65,8 @@ public class MainWindowViewModel : ReactiveObject
                 this.RaisePropertyChanged(nameof(FileLoaded));
                 this.RaisePropertyChanged(nameof(WindowTitle));
 
-                _activeEditorInteractionHandlers?.Dispose();
-
                 // push update to graphing functions
-                MessageBus.Current.SendMessage(new PlotFunctionsChangedEvent(editor?.GraphingFunctions ?? []));
+                MessageBus.Current.SendMessage(new PlotFunctionsChangedEvent(true, editor?.GraphingFunctions ?? []));
             });
 
         OpenEditors.ToObservableChangeSet()
