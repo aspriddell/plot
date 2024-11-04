@@ -33,6 +33,7 @@ public class MainWindowViewModel : ReactiveObject
     };
     
     private DocumentEditorViewModel _activeEditor;
+    private IDisposable _activeEditorInteractionHandlers;
 
     public MainWindowViewModel()
     {
@@ -60,10 +61,15 @@ public class MainWindowViewModel : ReactiveObject
 
         this.WhenAnyValue(x => x.ActiveEditor)
             .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(_ =>
+            .Subscribe(editor =>
             {
                 this.RaisePropertyChanged(nameof(FileLoaded));
                 this.RaisePropertyChanged(nameof(WindowTitle));
+
+                _activeEditorInteractionHandlers?.Dispose();
+
+                // push update to graphing functions
+                MessageBus.Current.SendMessage(new PlotFunctionsChangedEvent(editor?.GraphingFunctions ?? []));
             });
 
         OpenEditors.ToObservableChangeSet()

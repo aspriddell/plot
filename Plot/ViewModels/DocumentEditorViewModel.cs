@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using Plot.Core;
 using Plot.Models;
@@ -80,6 +79,8 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
 
     public string FileName => Document.FileName;
     public string TabContent => $"{FileName}{(IsModified ? "*" : string.Empty)}";
+    
+    public Interaction<System.Reactive.Unit, System.Reactive.Unit> OpenGraphWindowInteraction { get; } = new();
 
     public IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphingFunctions
     {
@@ -95,7 +96,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
         LastSavedVersion = MD5.HashData(Encoding.UTF8.GetBytes(Document.SourceText));
     }
 
-    public void ExecuteScript()
+    internal void ExecuteScript()
     {
         if (SourceDocument.TextLength == 0 || string.IsNullOrWhiteSpace(SourceDocument.Text))
         {
@@ -133,6 +134,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
             }
 
             GraphingFunctions = graphingFunctionsList;
+            MessageBus.Current.SendMessage(new PlotFunctionsChangedEvent(GraphingFunctions));
         }
         catch (Lexer.LexerException e)
         {

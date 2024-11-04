@@ -39,6 +39,7 @@
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.4" />
         <PackageReference Include="FluentAvaloniaUI" Version="2.1.0" />
+        <PackageReference Include="OxyPlot.Avalonia" Version="2.1.0" />
     </ItemGroup>
     
     <ItemGroup>

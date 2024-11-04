@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -18,6 +19,8 @@ namespace Plot.Views;
 
 public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
 {
+    private GraphWindow _graphWindow;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -32,6 +35,13 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
             ViewModel!.CopyToClipboardInteraction.RegisterHandler(CopyToClipboard).DisposeWith(disposables);
             ViewModel!.OpenFileDialogInteraction.RegisterHandler(HandleFileOpenPicker).DisposeWith(disposables);
             ViewModel!.SaveFileDialogInteraction.RegisterHandler(HandleFileSavePicker).DisposeWith(disposables);
+            
+            // subscribe to graphing function change events
+            MessageBus.Current.Listen<PlotFunctionsChangedEvent>()
+                .Where(x => x?.Functions?.Count > 0) // ignore all null/empty function lists
+                .ObserveOn(RxApp.MainThreadScheduler) // run on ui thread (using UI calls)
+                .Subscribe(_ => EnsureGraphWindow())
+                .DisposeWith(disposables);
         });
     }
 
@@ -67,7 +77,7 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
             }
         }
     }
-    
+
     private async Task CopyToClipboard(InteractionContext<string, Unit> ctx)
     {
         await (Clipboard?.SetTextAsync(ctx.Input) ?? Task.CompletedTask);
@@ -84,5 +94,31 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
     {
         var root = await GetTopLevel(this)!.StorageProvider.SaveFilePickerAsync(ctx.Input);
         ctx.SetOutput(root);
+    }
+
+    private void EnsureGraphWindow()
+    {
+        if (_graphWindow?.PlatformImpl == null)
+        {
+            _graphWindow = null;
+        }
+        
+        // if the graphwindow is closed, dispose the viewmodel and reconstruct
+        _graphWindow ??= new GraphWindow
+        {
+            DataContext = new GraphWindowViewModel()
+        };
+
+        _graphWindow.Closed += (sender, _) =>
+        {
+            (((GraphWindow)sender)!.DataContext as IDisposable)?.Dispose();
+        };
+
+        if (!_graphWindow.IsVisible)
+        {
+            _graphWindow.Show();
+        }
+
+        _graphWindow.Activate();
     }
 }
