@@ -1,7 +1,11 @@
 ﻿#nullable enable
 
+using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using FluentAvalonia.UI.Windowing;
 using ReactiveUI;
@@ -16,7 +20,7 @@ namespace Plot;
 /// </summary>
 /// <typeparam name="TViewModel">ViewModel type.</typeparam>
 /// <remarks>
-/// This is a version of the ReactiveUI <see cref="ReactiveWindow{TViewModel}"/> class modified to support <see cref="AppWindow"/>.
+/// This is a version of the ReactiveUI <see cref="ReactiveWindow{TViewModel}"/> class modified to support <see cref="AppWindow"/> and fix keyboard shortcut binding.
 /// See https://github.com/AvaloniaUI/Avalonia/blob/master/src/Avalonia.ReactiveUI/ReactiveWindow.cs for the original implementation.
 /// </remarks>
 public class ReactiveAppWindow<TViewModel> : AppWindow, IViewFor<TViewModel> where TViewModel : class
@@ -27,11 +31,52 @@ public class ReactiveAppWindow<TViewModel> : AppWindow, IViewFor<TViewModel> whe
     /// <summary>
     /// Initializes a new instance of the <see cref="ReactiveWindow{TViewModel}"/> class.
     /// </summary>
-    public ReactiveAppWindow()
+    protected ReactiveAppWindow()
     {
         // This WhenActivated block calls ViewModel's WhenActivated
         // block if the ViewModel implements IActivatableViewModel.
-        this.WhenActivated(disposables => { });
+        this.WhenActivated(_ =>
+        {
+            Focus();
+        });
+    }
+    
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            RegisterHotKeys(NativeMenu.GetMenu(this));
+        }
+
+        // needed to allow WhenActivated calls to fire
+        base.OnLoaded(e);
+    }
+    
+    // register hotkeys on platforms that don't "just work" out the box
+    // loosely based on https://github.com/AvaloniaUI/Avalonia/issues/2441#issuecomment-2151522663
+    private void RegisterHotKeys(NativeMenu? control)
+    {
+        if (control == null)
+        {
+            return;
+        }
+        
+        foreach (var item in control.Items.OfType<NativeMenuItem>())
+        {
+            if (item.Command != null && item.Gesture != null)
+            {
+                KeyBindings.Add(new KeyBinding
+                {
+                    Gesture = item.Gesture,
+                    Command = item.Command
+                });
+            }
+
+            foreach (var childItem in item.Menu?.OfType<NativeMenuItem>() ?? [])
+            {
+                RegisterHotKeys(childItem.Parent);
+            }
+        }
     }
 
     /// <summary>
