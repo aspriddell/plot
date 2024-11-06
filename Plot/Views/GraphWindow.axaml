@@ -1,12 +1,26 @@
-<Window xmlns="https://github.com/avaloniaui"
+<windowing:AppWindow xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Plot.ViewModels"
+             xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Plot.Views.GraphWindow"
              Title="Graph Viewer"
              Height="750" Width="750"
+             MinHeight="750" MinWidth="750"
              x:DataType="viewModels:GraphWindowViewModel">
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="_Window">
+                <NativeMenu>
+                    <NativeMenuItem Header="_Close Window"
+                                    Command="{Binding CloseWindow}"
+                                    Gesture="{OnPlatform Ctrl+W, macOS=Cmd+W}"/>
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+    
     <DockPanel/>
-</Window>
+</windowing:AppWindow>

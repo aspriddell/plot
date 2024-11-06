@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Windows.Input;
 using Plot.Core;
 using ReactiveUI;
 
@@ -25,6 +27,8 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             .ObserveOn(RxApp.MainThreadScheduler)
             .ToProperty(this, x => x.GraphFunctions, out _graphFunctions)
             .DisposeWith(_disposable);
+
+        CloseWindow = ReactiveCommand.CreateFromTask(async () => await CloseWindowInteraction.Handle(Unit.Default));
     }
 
     /// <summary>
@@ -32,6 +36,10 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     /// </summary>
     public IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphFunctions => _graphFunctions.Value;
 
+    public ICommand CloseWindow { get; }
+
+    public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
+    
     public void Dispose()
     {
         _disposable?.Dispose();
