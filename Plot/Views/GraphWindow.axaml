@@ -1,15 +1,50 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:oxy="using:OxyPlot.Avalonia"
-        xmlns:viewModels="clr-namespace:Plot.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="Plot.Views.GraphWindow"
-        Title="Graph Viewer"
-        Height="750" Width="750"
-        x:DataType="viewModels:GraphWindowViewModel">
-    <DockPanel>
-        <oxy:PlotView Model="{Binding GraphModel}"/>
-    </DockPanel>
-</Window>
+<plot:ReactiveAppWindow x:TypeArguments="viewModels:GraphWindowViewModel"
+                        xmlns="https://github.com/avaloniaui"
+                        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                        xmlns:oxy="using:OxyPlot.Avalonia"
+                        xmlns:viewModels="clr-namespace:Plot.ViewModels"
+                        xmlns:plot="clr-namespace:Plot"
+                        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                        x:Class="Plot.Views.GraphWindow"
+                        Title="Graph Viewer"
+                        Height="750" Width="750"
+                        x:DataType="viewModels:GraphWindowViewModel">
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="_Window">
+                <NativeMenu>
+                    <NativeMenuItem Header="_Close Window"
+                                    Command="{Binding CloseWindow}"
+                                    Gesture="{OnPlatform Ctrl+W, macOS=Cmd+W}"/>
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+    
+    <Window.Content>
+        <Panel>
+            <ExperimentalAcrylicBorder IsHitTestVisible="False">
+                <ExperimentalAcrylicBorder.Material>
+                    <ExperimentalAcrylicMaterial
+                        BackgroundSource="None"
+                        TintColor="{DynamicResource SolidBackgroundFillColorBase}"
+                        TintOpacity="1"
+                        MaterialOpacity="0.65" />
+                </ExperimentalAcrylicBorder.Material>
+            </ExperimentalAcrylicBorder>
+            
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="5" Margin="20,0,0,0" IsVisible="{OnPlatform {x:True}, macOS={x:False}}">
+                    <Label FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold" Content="{Binding Name, Source={x:Static Application.Current}}" />
+                    <Label FontSize="14" VerticalAlignment="Center" FontWeight="Regular" Foreground="DodgerBlue" Content="Graph Viewer" />
+
+                    <NativeMenuBar Margin="5,0,0,0" />
+                </StackPanel>
+
+                <oxy:PlotView DockPanel.Dock="Top" Background="Transparent" Model="{Binding GraphModel}"/>
+            </DockPanel>
+        </Panel>
+    </Window.Content>
+</plot:ReactiveAppWindow>
