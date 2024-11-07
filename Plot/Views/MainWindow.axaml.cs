@@ -77,7 +77,7 @@ public partial class MainWindow : ReactiveAppWindow<MainWindowViewModel>
 
         if (!_graphWindow.IsVisible)
         {
-            _graphWindow.Show(this);
+            _graphWindow.Show();
         }
 
         if (activateWindow)
