@@ -57,6 +57,8 @@ let rec private scan input =
     | '^' :: tail -> TokenType.Pow :: scan tail
     | '(' :: tail -> TokenType.LPar :: scan tail
     | ')' :: tail -> TokenType.RPar :: scan tail
+    | '[' :: tail -> TokenType.LInd :: scan tail
+    | ']' :: tail -> TokenType.RInd :: scan tail
     | '=' :: tail -> TokenType.Eq :: scan tail
     | ',' :: tail -> TokenType.Comma :: scan tail
     | '#' :: tail -> List.skipWhile (fun c -> c <> '\n') tail |> scan

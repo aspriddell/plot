@@ -6,6 +6,7 @@ type SymbolType =
     | Unit
     | Int of int
     | Float of double
+    | List of SymbolType list
 
     /// <summary>
     /// Represents a function that takes a list of symbols and produces an output.

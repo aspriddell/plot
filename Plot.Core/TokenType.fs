@@ -10,6 +10,8 @@ type public TokenType =
     | Pow // power (^)
     | LPar // left parenthesis (
     | RPar // right parenthesis )
+    | LInd // left indexer ([)
+    | RInd // right indexer (])
     | Eq // assignment (=)
     | Comma // comma (,)
     | NumI of int // integer number

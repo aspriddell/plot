@@ -9,18 +9,23 @@ exception FunctionNotFoundError of name: string
 exception VariableError of message: string * varName: string
 
 // Grammar:
-// <:Root:>      ::= <Assign> | <Expr> | <empty>
-// <Assign>      ::= "Identifier" "=" <Expr> | "Identifier" = "f" "(" <:Root:> ")"
-// <Expr>        ::= <Term> <ExprOpt>
-// <ExprOpt>     ::= "+" <Term> <ExprOpt> | "-" <Term> <ExprOpt> | <empty>
-// <Term>        ::= <Factor> <TermOpt>
-// <TermOpt>     ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
-// <Factor>      ::= <Base> <FactorOpt>
-// <FactorOpt>   ::= "^" <Factor> | <empty>
-// <Base>        ::= "-" <Base> | <Number> | <Identifier> | "(" <Expr> ")" | <FnCall>
-// <Number>      ::= "NumI" <value> | "NumF" <value>
-// <FnCall>      ::= <Identifier> "(" <Arguments> ")"
-// <Arguments>   ::= <Expr> ("," <Expr>)* | <empty>
+// <:Root:>         ::= <Assign> | <Expr> | <empty>
+// <Assign>         ::= "Identifier" "=" <Expr> | "Identifier" = "f" "(" <:Root:> ")"
+// <Expr>           ::= <Term> <ExprOpt>
+// <ExprOpt>        ::= "+" <Term> <ExprOpt> | "-" <Term> <ExprOpt> | <empty>
+// <Term>           ::= <Factor> <TermOpt>
+// <TermOpt>        ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
+// <Factor>         ::= <Base> <FactorOpt>
+// <FactorOpt>      ::= "^" <Factor> | <empty>
+// <Base>           ::= "-" <Base> | <Number> | <Identifier> | "(" <Expr> ")" | <FnCall> | <Array> | <ArrayIndex>
+// <Number>         ::= "NumI" <value> | "NumF" <value>
+
+// <FnCall>         ::= <Identifier> "(" <Arguments> ")"
+// <Arguments>      ::= <Expr> ("," <Expr>)* | <empty>
+
+// <Array>          ::= "[" <ArrayElements> "]"
+// <ArrayElements>  ::= <Expr> ("," <Expr>)* | <empty>
+// <ArrayIndex>     ::= <Identifier> "[" <Expr> "]"
 
 // in the implementation below, "Arguments" is handled in FnCallExec to allow for code sharing with the f(...) handler,
 // which requires arguments not to be processed at the time of the call (to allow for calling the output function with different arguments)
