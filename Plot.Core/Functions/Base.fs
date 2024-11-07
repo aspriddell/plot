@@ -5,6 +5,20 @@ open System.Diagnostics
 open Plot.Core
 open Plot.Core.Symbols
 
+[<PlotScriptFunction("int")>]
+let public castToInt (x: SymbolType list) : SymbolType =
+    match x |> Seq.exactlyOne with
+    | Int i -> Int i
+    | Float f -> Int(int f)
+    | _ -> invalidArg "*" "int expects a single number argument"
+
+[<PlotScriptFunction("float")>]
+let public castToFloat (x: SymbolType list) : SymbolType =
+    match x |> Seq.exactlyOne with
+    | Int i -> Float(float i)
+    | Float f -> Float f
+    | _ -> invalidArg "*" "float expects a single number argument"
+
 [<PlotScriptFunction("pow")>]
 let public pow (x: SymbolType list) : SymbolType =
     match x with
@@ -66,7 +80,8 @@ let public randInt (x: SymbolType list) : SymbolType =
 
 [<PlotScriptFunction("roll")>]
 let public rickRoll (_x: SymbolType list) : SymbolType =
-    let processStartInfo = ProcessStartInfo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    let processStartInfo =
+        ProcessStartInfo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
     processStartInfo.UseShellExecute <- true
     processStartInfo.Verb <- "open"
