@@ -62,15 +62,37 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
                                    (tLst, negateValue tVal)
 
-        // feature: if there's a method like pi(), you can reassign it because symbols are checked before functions
-        | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))
-        | [TokenType.Identifier name] when symbolTable.ContainsKey(name) -> ([], symbolTable[name])
-        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->
+        | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))  // assignment should not happen here
+        | [TokenType.Identifier name] when symbolTable.ContainsKey(name) -> ([], symbolTable[name]) // handle single var access where var could be a function
+        | TokenType.Identifier name :: TokenType.LInd :: tail when symbolTable.ContainsKey(name) -> // handle array indexing
+            let (remaining, index) = Expr tail
+            match remaining with
+            | TokenType.RInd :: tail ->
+                match symbolTable[name] with
+                | SymbolType.List arr ->
+                    let idx = match index with
+                              | SymbolType.Int i -> i
+                              | _ -> raise (ParserError "Index value must be an integer")
+                    if idx >= 0 && idx < arr.Length then (tail, arr[idx]) else raise (ParserError "Index out of bounds")
+                | _ -> raise (ParserError "Indexers can only be used on arrays")
+            | _ -> raise (ParserError "Unclosed indexer")
+        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> // symbol usage (functions or values)
             match symbolTable[name] with
             | SymbolType.PlotScriptFunction (func, _) when tail.Head = LPar -> FnCall (fun (f, _) -> func(f)) tail
             | _ -> (tail, symbolTable[name])
         | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> FnCall fnContainer.FunctionTable[name] tail
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
+
+        | TokenType.LInd :: tail ->
+            let rec parseArrayElements tList acc =
+                match tList with
+                | TokenType.RInd :: tail -> (tail, SymbolType.List (List.rev acc))
+                | _ -> let (remaining, result) = Expr tList
+                       match remaining with
+                       | TokenType.Comma :: tail -> parseArrayElements tail (result :: acc)
+                       | TokenType.RInd :: tail -> (tail, SymbolType.List (List.rev (result :: acc)))
+                       | _ -> raise (ParserError "Expected comma or closing bracket")
+            parseArrayElements tail []
 
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
                                     match tLst with
