@@ -35,7 +35,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             .DisposeWith(_disposable);
 
         this.WhenAnyValue(x => x.GraphFunctions)
-            .Where(x => x?.Count > 0)
+            .Where(x => x != null)
             .Select(BuildPlotModel)
             .ObserveOn(RxApp.MainThreadScheduler)
             .ToProperty(this, x => x.GraphModel, out _graphModel);
