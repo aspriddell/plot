@@ -62,58 +62,57 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
                                    (tLst, negateValue tVal)
 
-        | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))  // assignment should not happen here
-        | [TokenType.Identifier name] when symbolTable.ContainsKey(name) -> ([], symbolTable[name]) // handle single var access where var could be a function
-        | TokenType.Identifier name :: TokenType.LInd :: tail when symbolTable.ContainsKey(name) -> // handle array indexing
-            let rec parseNestedIndex tList current =
-                let (remaining, index) = Expr tList
-                match remaining, index with
-                | TokenType.RInd :: tail, SymbolType.Int idx
-                | TokenType.RInd :: tail, SymbolType.List [SymbolType.Int idx] -> // Expr produces as single-item lists for secondary indexes
-                    match current with
-                    | SymbolType.List arr when idx >= 0 && idx < arr.Length ->
-                        if tail.Length > 0 && tail.Head = TokenType.LInd then // tail length check needed as accessing Head will throw if empty (used to prevent consumption of token)
-                            parseNestedIndex tail arr[idx]
-                        else
-                            (tail, arr[idx])
-                    | SymbolType.List _ -> raise (ParserError "Index out of bounds")
-                    | _ -> raise (ParserError "Invalid indexer usage")
-                | TokenType.LInd :: tail, SymbolType.List [SymbolType.Int idx] ->
-                    match current with
-                    | SymbolType.List arr when idx >= 0 && idx < arr.Length -> parseNestedIndex tail arr[idx]
-                    | SymbolType.List _ -> raise (ParserError "Index out of bounds")
-                    | _ -> raise (ParserError "Invalid indexer usage")
-                | _, SymbolType.List [SymbolType.Int idx] ->
-                    match current with
-                    | SymbolType.List arr when idx >= 0 && idx < arr.Length -> (remaining, arr[idx])
-                    | SymbolType.List _ -> raise (ParserError "Index out of bounds")
-                    | _ -> raise (ParserError "Invalid indexer usage")
-                | _ -> raise (ParserError "Index parsing error")
-            parseNestedIndex tail symbolTable[name]
-        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> // symbol usage (functions or values)
+        | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))  // invalid assignment
+        | [TokenType.Identifier name] when symbolTable.ContainsKey(name) -> ([], symbolTable[name]) // single value return
+        | TokenType.Identifier name :: TokenType.LInd :: tail when symbolTable.ContainsKey(name) -> // array index
+            ArrayIndex tail symbolTable[name]
+
+        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->                   // symbol lookup (and potential exec)
             match symbolTable[name] with
             | SymbolType.PlotScriptFunction (func, _) when tail.Head = LPar -> FnCall (fun (f, _) -> func(f)) tail
             | _ -> (tail, symbolTable[name])
         | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> FnCall fnContainer.FunctionTable[name] tail
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
 
-        | TokenType.LInd :: tail ->
-            let rec parseArrayElements tList acc =
-                match tList with
-                | TokenType.RInd :: tail -> (tail, SymbolType.List (List.rev acc))
-                | _ -> let (remaining, result) = Expr tList
-                       match remaining with
-                       | TokenType.Comma :: tail -> parseArrayElements tail (result :: acc)
-                       | TokenType.RInd :: tail -> (tail, SymbolType.List (List.rev (result :: acc)))
-                       | _ -> raise (ParserError "Expected comma or closing bracket")
-            parseArrayElements tail []
-
+        | TokenType.LInd :: tail -> Array tail []
         | TokenType.LPar :: tail -> let (tLst, tVal) = Expr tail
                                     match tLst with
                                     | TokenType.RPar :: tail -> (tail, tVal)
                                     | _ -> raise (ParserError "One or more set of parentheses were not closed.")
 
         | _ -> raise (ParserError "Parser error")
+    and Array tList acc =
+        match tList with
+        | TokenType.RInd :: tail -> (tail, SymbolType.List (List.rev acc))
+        | _ -> let (remaining, result) = Expr tList
+               match remaining with
+               | TokenType.Comma :: tail -> Array tail (result :: acc)
+               | TokenType.RInd :: tail -> (tail, SymbolType.List (List.rev (result :: acc)))
+               | _ -> raise (ParserError "Expected comma or closing bracket")
+    and ArrayIndex tList current =
+        let (remaining, index) = Expr tList
+        match remaining, index with
+        | TokenType.RInd :: tail, SymbolType.Int idx
+        | TokenType.RInd :: tail, SymbolType.List [SymbolType.Int idx] -> // Expr produces as single-item lists for secondary indexes
+            match current with
+            | SymbolType.List arr when idx >= 0 && idx < arr.Length ->
+                if tail.Length > 0 && tail.Head = TokenType.LInd then // tail length check needed as accessing Head will throw if empty (used to prevent consumption of token)
+                    ArrayIndex tail arr[idx]
+                else
+                    (tail, arr[idx])
+            | SymbolType.List _ -> raise (ParserError "Index out of bounds")
+            | _ -> raise (ParserError "Invalid indexer usage")
+        | TokenType.LInd :: tail, SymbolType.List [SymbolType.Int idx] ->
+            match current with
+            | SymbolType.List arr when idx >= 0 && idx < arr.Length -> ArrayIndex tail arr[idx]
+            | SymbolType.List _ -> raise (ParserError "Index out of bounds")
+            | _ -> raise (ParserError "Invalid indexer usage")
+        | _, SymbolType.List [SymbolType.Int idx] ->
+            match current with
+            | SymbolType.List arr when idx >= 0 && idx < arr.Length -> (remaining, arr[idx])
+            | SymbolType.List _ -> raise (ParserError "Index out of bounds")
+            | _ -> raise (ParserError "Invalid indexer usage")
+        | _ -> raise (ParserError "Index parsing error")
     and FnCall func tList =
         let FnCallExec callTokenList =
             if List.length callTokenList > 0 then
