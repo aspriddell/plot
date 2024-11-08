@@ -69,9 +69,13 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
 
         | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->                   // symbol lookup (and potential exec)
             match symbolTable[name] with
-            | SymbolType.PlotScriptFunction (func, _) when tail.Head = LPar -> FnCall (fun (f, _) -> func(f)) tail
+            | SymbolType.PlotScriptFunction (func, _) when List.tryHead tail = Some(TokenType.LPar) -> FnCall (fun (f, _) -> func(f)) tail
             | _ -> (tail, symbolTable[name])
-        | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> FnCall fnContainer.FunctionTable[name] tail
+        | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) ->
+            if List.tryHead tail = Some(TokenType.LPar) then
+                FnCall fnContainer.FunctionTable[name] tail
+            else
+                (tail, SymbolType.PlotScriptFunction ((fun fnArg -> fnContainer.FunctionTable[name](fnArg, null)), []))
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
 
         | TokenType.LInd :: tail -> Array tail []
@@ -96,7 +100,7 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         | TokenType.RInd :: tail, SymbolType.List [SymbolType.Int idx] -> // Expr produces as single-item lists for secondary indexes
             match current with
             | SymbolType.List arr when idx >= 0 && idx < arr.Length ->
-                if tail.Length > 0 && tail.Head = TokenType.LInd then // tail length check needed as accessing Head will throw if empty (used to prevent consumption of token)
+                if List.tryHead tail = Some(TokenType.LInd) then
                     ArrayIndex tail arr[idx]
                 else
                     (tail, arr[idx])
