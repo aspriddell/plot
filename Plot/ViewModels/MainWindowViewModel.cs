@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Text;
@@ -31,7 +32,7 @@ public class MainWindowViewModel : ReactiveObject
         Patterns = ["*.plotscript"],
         MimeTypes = ["text/plain"]
     };
-    
+
     private DocumentEditorViewModel _activeEditor;
 
     public MainWindowViewModel()
@@ -71,6 +72,7 @@ public class MainWindowViewModel : ReactiveObject
 
         OpenEditors.ToObservableChangeSet()
             .Delay(TimeSpan.FromMilliseconds(10))
+            .Throttle(TimeSpan.FromMilliseconds(25))
             .Subscribe(c =>
             {
                 if (c.Adds > 0)
@@ -160,7 +162,7 @@ public class MainWindowViewModel : ReactiveObject
         var options = new FilePickerOpenOptions
         {
             Title = "Open file",
-            AllowMultiple = false,
+            AllowMultiple = true,
             FileTypeFilter = [PlotScriptType, new FilePickerFileType("All files")
             {
                 AppleUniformTypeIdentifiers = ["public.item"],
@@ -170,18 +172,21 @@ public class MainWindowViewModel : ReactiveObject
         };
             
         var selectedFiles = await OpenFileDialogInteraction.Handle(options).ToTask();
-        if (selectedFiles.Count != 1)
+        if (selectedFiles.Count == 0)
         {
             return;
         }
 
-        var document = await PlotScriptDocument.LoadFileAsync(selectedFiles.Single());
         if (OpenEditors.Count == 0 && OpenEditors.Single().SourceDocument.TextLength == 0 && !OpenEditors.Single().Document.IsBackedByFile)
         {
             OpenEditors.Clear();
         }
-
-        AddEditor(new DocumentEditorViewModel(document));
+        
+        foreach (var file in selectedFiles)
+        {
+            var document = await PlotScriptDocument.LoadFileAsync(file);
+            AddEditor(new DocumentEditorViewModel(document));
+        }
     }
 
     private async Task SaveScriptImpl()
@@ -223,7 +228,6 @@ public class MainWindowViewModel : ReactiveObject
         }
 
         OpenEditors.Add(editor);
-        Task.Delay(50).ContinueWith(_ => ActiveEditor = editor);
 
         if (allowClosingEmpty && !ActiveEditor.IsModified && !ActiveEditor.Document.IsBackedByFile)
         {
