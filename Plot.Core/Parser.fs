@@ -101,17 +101,17 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
                 else
                     (tail, arr[idx])
             | SymbolType.List _ -> raise (ParserError "Index out of bounds")
-            | _ -> raise (ParserError "Invalid indexer usage")
+            | _ -> raise (ParserError "Cannot use indexer on non-list type")
         | TokenType.LInd :: tail, SymbolType.List [SymbolType.Int idx] ->
             match current with
             | SymbolType.List arr when idx >= 0 && idx < arr.Length -> ArrayIndex tail arr[idx]
             | SymbolType.List _ -> raise (ParserError "Index out of bounds")
-            | _ -> raise (ParserError "Invalid indexer usage")
+            | _ -> raise (ParserError "Cannot use indexer on non-list type")
         | _, SymbolType.List [SymbolType.Int idx] ->
             match current with
             | SymbolType.List arr when idx >= 0 && idx < arr.Length -> (remaining, arr[idx])
             | SymbolType.List _ -> raise (ParserError "Index out of bounds")
-            | _ -> raise (ParserError "Invalid indexer usage")
+            | _ -> raise (ParserError "Cannot use indexer on non-list type")
         | _ -> raise (ParserError "Index parsing error")
     and FnCall func tList =
         let FnCallExec callTokenList =
