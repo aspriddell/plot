@@ -13,10 +13,10 @@ exception VariableError of message: string * varName: string
 // <Assign>         ::= "Identifier" "=" <Expr> | "Identifier" = "f" "(" <:Root:> ")"
 // <Expr>           ::= <Term> <ExprOpt>
 // <ExprOpt>        ::= "+" <Term> <ExprOpt> | "-" <Term> <ExprOpt> | <empty>
-// <Term>           ::= <Factor> <TermOpt>
-// <TermOpt>        ::= "*" <Factor> <TermOpt> | "/" <Factor> <TermOpt> | "%" <Factor> <TermOpt> | <empty>
-// <Factor>         ::= <Base> <FactorOpt>
-// <FactorOpt>      ::= "^" <Factor> | <empty>
+// <Term>           ::= <Power> <TermOpt>
+// <TermOpt>        ::= "*" <Power> <TermOpt> | "/" <Power> <TermOpt> | "%" <Power> <TermOpt> | <empty>
+// <Power>         ::= <Base> <PowerOpt>
+// <PowerOpt>      ::= "^" <Power> | <empty>
 // <Base>           ::= "-" <Base> | <Number> | <Identifier> | "(" <Expr> ")" | <FnCall> | <Array> | <ArrayIndex>
 // <Number>         ::= "NumI" <value> | "NumF" <value>
 
@@ -39,39 +39,43 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         | TokenType.Sub :: tail -> let (tLst, tVal) = Term tail
                                    ExprOpt (tLst, subValues(value, tVal))
         | _ -> (tList, value)
-    and Term tList = (Factor >> TermOpt) tList
+    and Term tList = (Power >> TermOpt) tList
     and TermOpt (tList, value) =
         match tList with
-        | TokenType.Mul :: tail -> let (tLst, tVal) = Factor tail
+        | TokenType.Mul :: tail -> let (tLst, tVal) = Power tail
                                    TermOpt (tLst, mulValues(value, tVal))
-        | TokenType.Div :: tail -> let (tLst, tVal) = Factor tail
+        | TokenType.Div :: tail -> let (tLst, tVal) = Power tail
                                    TermOpt (tLst, divValues(value, tVal))
-        | TokenType.Mod :: tail -> let (tLst, tVal) = Factor tail
+        | TokenType.Mod :: tail -> let (tLst, tVal) = Power tail
                                    TermOpt (tLst, modValues(value, tVal))
         | _ -> (tList, value)
-    and Factor tList = (Base >> FactorOpt) tList
-    and FactorOpt (tList, value) =
+    and Power tList = (Base >> PowerOpt) tList
+    and PowerOpt (tList, value) =
         match tList with
         | TokenType.Pow :: tail -> let (tLst, tVal) = Base tail
-                                   FactorOpt (tLst, powValues(value, tVal))
+                                   PowerOpt (tLst, powValues(value, tVal))
         | _ -> (tList, value)
     and Base tList =
         match tList with
         | TokenType.NumI value :: tail -> (tail, SymbolType.Int value)
         | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
+        
+        // unary number handling
         | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
                                    (tLst, negateValue tVal)
 
         | TokenType.Identifier name :: Eq :: _ -> raise (VariableError("Assignment failed", name))  // invalid assignment
         | [TokenType.Identifier name] when symbolTable.ContainsKey(name) -> ([], symbolTable[name]) // single value return
-        | TokenType.Identifier name :: TokenType.LInd :: tail when symbolTable.ContainsKey(name) -> // array index
+        | TokenType.Identifier name :: TokenType.LInd :: tail when symbolTable.ContainsKey(name) -> // array index access
             ArrayIndex tail symbolTable[name]
 
-        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) ->                   // symbol lookup (and potential exec)
+        | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> // symbol lookup
             match symbolTable[name] with
+            // check the function is being invoked before invoking it (check for next token being LPar)
             | SymbolType.PlotScriptFunction (func, _) when List.tryHead tail = Some(TokenType.LPar) -> FnCall (fun (f, _) -> func(f)) tail
             | _ -> (tail, symbolTable[name])
-        | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) ->
+        | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> // function lookup (builtin)
+            // same check as above, make sure it's being invoked otherwise return it as a plotscript function (monkey patchable)
             if List.tryHead tail = Some(TokenType.LPar) then
                 FnCall fnContainer.FunctionTable[name] tail
             else
@@ -96,24 +100,24 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
     and ArrayIndex tList current =
         let (remaining, index) = Expr tList
         match remaining, index with
-        | TokenType.RInd :: tail, SymbolType.Int idx
-        | TokenType.RInd :: tail, SymbolType.List [SymbolType.Int idx] -> // Expr produces as single-item lists for secondary indexes
+        | TokenType.RInd :: tail, SymbolType.Int idx // single index access
+        | TokenType.RInd :: tail, SymbolType.List [SymbolType.Int idx] -> // secondary index access (handles [2] in a[1][2]) as Expr produces a[1] and an array [2])
             match current with
             | SymbolType.List arr when idx >= 0 && idx < arr.Length ->
-                if List.tryHead tail = Some(TokenType.LInd) then
+                if List.tryHead tail = Some(TokenType.LInd) then // if next token starts another index, go again...
                     ArrayIndex tail arr[idx]
-                else
+                else // return the value
                     (tail, arr[idx])
             | SymbolType.List _ -> raise (ParserError "Index out of bounds")
             | _ -> raise (ParserError "Cannot use indexer on non-list type")
-        | TokenType.LInd :: tail, SymbolType.List [SymbolType.Int idx] ->
+        | TokenType.LInd :: tail, SymbolType.List [SymbolType.Int idx] -> // final index handling in multiple sequential accesses (handles [3] in a[1][2][3])
             match current with
-            | SymbolType.List arr when idx >= 0 && idx < arr.Length -> ArrayIndex tail arr[idx]
+            | SymbolType.List arr when idx >= 0 && idx < arr.Length -> ArrayIndex tail arr[idx]  // recursive check
             | SymbolType.List _ -> raise (ParserError "Index out of bounds")
             | _ -> raise (ParserError "Cannot use indexer on non-list type")
-        | _, SymbolType.List [SymbolType.Int idx] ->
+        | _, SymbolType.List [SymbolType.Int idx] -> // handle base case (newline/identifier starting another statement, etc.)
             match current with
-            | SymbolType.List arr when idx >= 0 && idx < arr.Length -> (remaining, arr[idx])
+            | SymbolType.List arr when idx >= 0 && idx < arr.Length -> (remaining, arr[idx]) // final index
             | SymbolType.List _ -> raise (ParserError "Index out of bounds")
             | _ -> raise (ParserError "Cannot use indexer on non-list type")
         | _ -> raise (ParserError "Index parsing error")
