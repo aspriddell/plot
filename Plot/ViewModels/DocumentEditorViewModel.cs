@@ -79,8 +79,6 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
 
     public string FileName => Document.FileName;
     public string TabContent => $"{FileName}{(IsModified ? "*" : string.Empty)}";
-    
-    public Interaction<System.Reactive.Unit, System.Reactive.Unit> OpenGraphWindowInteraction { get; } = new();
 
     public IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphingFunctions
     {
@@ -88,7 +86,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
         private set => this.RaiseAndSetIfChanged(ref _graphingFunctions, value);
     }
 
-    public async Task SaveDocument(IStorageFile saveAs = null)
+    internal async Task SaveDocument(IStorageFile saveAs = null)
     {
         await Document.SaveDocument(saveAs);
 
