@@ -1,7 +1,31 @@
 module Plot.Core.Functions.Calculus
 
+open System
 open Plot.Core
 open Plot.Core.Symbols
+
+
+[<PlotScriptFunction("polyfn")>]
+[<PlotScriptFunction("polynomial")>]
+let public polyFn (x: SymbolType list) : SymbolType =
+    // create a plotscript function from the given coefficients
+    // if the coefficients are [a, b, c], the function will be a^2 + bx + c
+    let rec powMul xVal coeffs acc =
+        match coeffs with
+        | [] -> acc
+        | Int v :: tail -> powMul xVal tail (float v * Math.Pow(xVal, float tail.Length) + acc)
+        | Float v :: tail -> powMul xVal tail (float v * Math.Pow(xVal, float tail.Length) + acc)
+        | _ -> invalidArg "*" "expected a float or int type"
+
+    and processFromInput inputs coeffs =
+        match inputs with
+        | [ Int i ] -> Float(powMul (float i) coeffs 0)
+        | [ Float f ] -> Float(powMul f coeffs 0)
+        | _ -> invalidArg "*" "expected a single float or int type"
+
+    match x with
+    | [ List coeffs ] -> PlotScriptFunction((fun i -> processFromInput i coeffs), [])
+    | _ -> invalidArg "*" "polyfn requires a single list of coefficients"
 
 [<PlotScriptFunction("diff")>]
 [<PlotScriptFunction("differentiate")>]
