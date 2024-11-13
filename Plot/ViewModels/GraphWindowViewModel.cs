@@ -73,7 +73,10 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             return series;
         });
 
-        var plot = new PlotModel();
+        var plot = new PlotModel
+        {
+            PlotType = PlotType.Cartesian
+        };
 
         foreach (var s in series)
         {
