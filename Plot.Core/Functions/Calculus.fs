@@ -81,7 +81,7 @@ let rec public findRoots (x: SymbolType list) : SymbolType =
 
     match x with
     // handle missing step size
-    | [ List list ] -> findRoots (list @ [Float 0.1])
+    | [ List _ ] -> findRoots (x @ [Float 0.1])
     | [ List list; Int step ] -> findRoots [List list; Float (float step)]
     
     // handle incorrect coefficient count
