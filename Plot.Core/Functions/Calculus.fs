@@ -72,10 +72,12 @@ let rec public findRoots (x: SymbolType list) : SymbolType =
         |> Seq.map (fun (a, b) -> (a + b) / 2.0) // use the midpoint of the interval
 
     // https://personal.math.ubc.ca/~anstee/math104/newtonmethod.pdf
-    let rec newtonRaphson coeffs coeffs' guess tolerance =
+    let rec newtonRaphson coeffs coeffs' guess tolerance iterationsLeft =
+        if iterationsLeft = 0 then nan else
+
         let nextGuess = guess - (polynomial coeffs guess / polynomial coeffs' guess)
         if abs (nextGuess - guess) < tolerance then nextGuess
-        else newtonRaphson coeffs coeffs' nextGuess tolerance
+        else newtonRaphson coeffs coeffs' nextGuess tolerance (iterationsLeft - 1)
 
     match x with
     // handle missing step size
@@ -89,7 +91,8 @@ let rec public findRoots (x: SymbolType list) : SymbolType =
         let coeffs' = derivative coeffs
 
         generateIntervals coeffs step
-        |> Seq.map (fun guess -> newtonRaphson coeffs coeffs' guess 1e-7)
+        |> Seq.map (fun guess -> newtonRaphson coeffs coeffs' guess 1e-7 1000)
+        |> Seq.filter (fun root -> not (Double.IsNaN root))
         |> Seq.distinct
         |> Seq.map Float
         |> List.ofSeq
