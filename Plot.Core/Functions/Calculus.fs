@@ -87,9 +87,8 @@ let rec public findRoots (x: SymbolType list) : SymbolType =
         let coeffs' = derivativeCalc coeffs
 
         generateIntervals coeffs step
-        |> Seq.map (fun guess -> newtonRaphson coeffs coeffs' guess 1e-7 1000)
+        |> Seq.map (fun guess -> Math.Round(newtonRaphson coeffs coeffs' guess 1e-7 1000, 6))
         |> Seq.filter (fun root -> not (Double.IsNaN root))
-        |> Seq.map (fun f -> Math.Round(f, 6))
         |> Seq.distinct
         |> Seq.map Float
         |> List.ofSeq
