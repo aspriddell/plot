@@ -89,6 +89,7 @@ let rec public findRoots (x: SymbolType list) : SymbolType =
         generateIntervals coeffs step
         |> Seq.map (fun guess -> newtonRaphson coeffs coeffs' guess 1e-7 1000)
         |> Seq.filter (fun root -> not (Double.IsNaN root))
+        |> Seq.map (fun f -> Math.Round(f, 6))
         |> Seq.distinct
         |> Seq.map Float
         |> List.ofSeq
