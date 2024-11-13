@@ -5,7 +5,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using Microsoft.FSharp.Collections;
-using Microsoft.FSharp.Core;
 using OxyPlot;
 using OxyPlot.Series;
 using Plot.Core;
@@ -40,7 +39,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             .Select(BuildPlotModel)
             .ObserveOn(RxApp.MainThreadScheduler)
             .ToProperty(this, x => x.GraphModel, out _graphModel);
-        
+
         CloseWindow = ReactiveCommand.CreateFromTask(async () => await CloseWindowInteraction.Handle(Unit.Default));
     }
 
@@ -57,7 +56,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     public ICommand CloseWindow { get; }
 
     public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
-    
+
     private static PlotModel BuildPlotModel(IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> fn)
     {
         var series = fn.Select(f =>
@@ -88,7 +87,8 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
 
     private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(double i)
     {
-        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i), FSharpList<Symbols.SymbolType>.Empty);
+        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i),
+            FSharpList<Symbols.SymbolType>.Empty);
     }
 
     private static DataPoint ConvertToDataPoint(double x, Symbols.SymbolType symbol) => symbol switch

@@ -19,7 +19,7 @@ let private cauchyBound coeffs =
     let max = coeffs |> Seq.skip 1 |> Seq.map abs |> Seq.max
     max / (coeffs |> Seq.head |> abs)
     
-let private symbolToFloat c =
+let internal symbolToFloat c =
     match c with
     | Int i -> float i
     | Float f -> f
