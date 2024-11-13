@@ -62,7 +62,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     {
         var series = fn.Select(f =>
         {
-            var range = f.Item.DefaultRange.Equals(FSharpOption<IEnumerable<double>>.None)
+            var range = f.Item.DefaultRange == null
                 ? Enumerable.Range(-100, 200).Select(x => (double)x)
                 : f.Item.DefaultRange.Value;
 
