@@ -7,17 +7,25 @@ type SymbolType =
     | Int of int
     | Float of double
     | List of SymbolType list
+    | PlotScriptFunction of FunctionInfo
+    | PlotScriptGraphingFunction of PlottingFunctionInfo
+    | PlotScriptPolynomialFunction of PolynomialFunctionInfo
 
-    /// <summary>
-    /// Represents a function that takes a list of symbols and produces an output.
-    /// The "source" tokens are also provided for advanced processing.
-    /// </summary>
-    | PlotScriptFunction of ((SymbolType list -> SymbolType) * TokenType list)
-    
-    /// <summary>
-    /// Represents a function that is used with a graph to plot something.
-    /// </summary>
-    | PlotScriptGraphingFunction of (SymbolType list -> SymbolType)
+and FunctionInfo = {
+    Function: SymbolType list -> SymbolType
+    Tokens: TokenType list option
+}
+
+and PolynomialFunctionInfo = {
+    Function: SymbolType list -> SymbolType
+    Coefficients: float list
+    RealRootRange: float * float
+}
+
+and PlottingFunctionInfo = {
+    Function: SymbolType list -> SymbolType
+    DefaultRange: float seq option
+}
 
 let internal isAssignableSymbolType(symbol: SymbolType): bool =
     match symbol with

@@ -9,33 +9,37 @@ let private derivative coeffs =
     coeffs
     |> List.take (coeffs.Length - 1) // skip final term (constant)
     |> List.mapi (fun i c -> c * float (coeffs.Length - i - 1)) // do multiplication
+
+let private polynomial (coeffs: float list) (x: float) : float =
+    coeffs |> Seq.mapi (fun i c -> c * Math.Pow(x, float (List.length coeffs - i - 1))) |> Seq.sum
     
-let private toFloat c =
+let private symbolToFloat c =
     match c with
     | Int i -> float i
     | Float f -> f
     | _ -> invalidArg "*" "expected a float or int type"
+    
+// https://math.libretexts.org/Courses/Highline_College/MATHP_141%3A_Corequisite_Precalculus/04%3A_Polynomial_and_Rational_Functions/4.05%3A_Zeros_of_Polynomials
+let private cauchyBound coeffs =
+    let max = coeffs |> Seq.skip 1 |> Seq.map abs |> Seq.max
+    max / (coeffs |> Seq.head |> abs)
 
 [<PlotScriptFunction("polyfn")>]
 [<PlotScriptFunction("polynomial")>]
 let public polyFn (x: SymbolType list) : SymbolType =
-    // create a plotscript function from the given coefficients
-    // if the coefficients are [a, b, c], the function will be a^2 + bx + c
-    let rec powMul xVal coeffs acc =
-        match coeffs with
-        | [] -> acc
-        | Int v :: tail -> powMul xVal tail (Math.FusedMultiplyAdd(float v, Math.Pow(xVal, float tail.Length), acc))
-        | Float v :: tail -> powMul xVal tail (Math.FusedMultiplyAdd(float v, Math.Pow(xVal, float tail.Length), acc))
-        | _ -> invalidArg "*" "expected a float or int type"
-
-    and processFromInput inputs coeffs =
-        match inputs with
-        | [ Int i ] -> Float(powMul (float i) coeffs 0)
-        | [ Float f ] -> Float(powMul f coeffs 0)
-        | _ -> invalidArg "*" "expected a single float or int type"
-
     match x with
-    | [ List coeffs ] -> PlotScriptFunction((fun i -> processFromInput i coeffs), [])
+    | [ List coeffs ] ->
+        let convertedCoeffs = coeffs |> List.map symbolToFloat
+        let callback = fun (inputs: SymbolType list) ->
+            match inputs with
+            | [ Int i ] -> polynomial convertedCoeffs (float i) |> Float
+            | [ Float f ] -> polynomial convertedCoeffs f |> Float
+            | _ -> invalidArg "*" "expected a single float or int type"
+
+        let m = cauchyBound convertedCoeffs
+        PlotScriptPolynomialFunction({ Function = callback;
+                                       RealRootRange = (-(m + 1.0), (m + 1.0));
+                                       Coefficients = coeffs |> List.map symbolToFloat })
     | _ -> invalidArg "*" "polyfn requires a single list of coefficients"
 
 [<PlotScriptFunction("diff")>]
@@ -48,21 +52,13 @@ let rec public differentiate (x: SymbolType list) : SymbolType =
 
     match x with
     | [ List list ] -> differentiate (list @ [Int 1])
-    | [ List list; Int order ] when order > 0 -> List(performWithOrder (list |> List.map toFloat, order) |> List.map (fun f -> Float(f)))
+    | [ List list; Int order ] when order > 0 -> List(performWithOrder (list |> List.map symbolToFloat, order) |> List.map Float)
     | _ -> invalidArg "*" "differentiate requires a single list of symbols and an optional, positive integer order"
 
 [<PlotScriptFunction("solve")>]
 [<PlotScriptFunction("roots")>]
 [<PlotScriptFunction("findroots")>]
 let rec public findRoots (x: SymbolType list) : SymbolType =
-    let polynomial (coeffs: float list) (x: float) : float =
-        coeffs |> Seq.mapi (fun i c -> c * Math.Pow(x, float (List.length coeffs - i - 1))) |> Seq.sum
-
-    // https://math.libretexts.org/Courses/Highline_College/MATHP_141%3A_Corequisite_Precalculus/04%3A_Polynomial_and_Rational_Functions/4.05%3A_Zeros_of_Polynomials
-    let cauchyBound coeffs =
-        let max = coeffs |> Seq.skip 1 |> Seq.map abs |> Seq.max
-        max / (coeffs |> Seq.head |> abs)
-
     let generateIntervals coeffs step =
         let m = cauchyBound coeffs
 
@@ -83,11 +79,11 @@ let rec public findRoots (x: SymbolType list) : SymbolType =
     // handle missing step size
     | [ List _ ] -> findRoots (x @ [Float 0.1])
     | [ List list; Int step ] -> findRoots [List list; Float (float step)]
-    
+
     // handle incorrect coefficient count
     | [ List list; Float _ ] when List.length list < 2 -> List []
     | [ List list; Float step ] when step > 0 ->
-        let coeffs = list |> List.map toFloat
+        let coeffs = list |> List.map symbolToFloat
         let coeffs' = derivative coeffs
 
         generateIntervals coeffs step

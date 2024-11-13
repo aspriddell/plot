@@ -17,10 +17,10 @@
   <ItemGroup>
     <Compile Include="Functions\Base.fs" />
     <Compile Include="Functions\Consts.fs" />
-    <Compile Include="Functions\Plotting.fs" />
     <Compile Include="Functions\Trig.fs" />
     <Compile Include="Functions\Lists.fs" />
     <Compile Include="Functions\Calculus.fs" />
+    <Compile Include="Functions\Plotting.fs" />
   </ItemGroup>
 
 </Project>

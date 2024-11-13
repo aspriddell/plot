@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 using OxyPlot;
 using OxyPlot.Series;
 using Plot.Core;
 using ReactiveUI;
+using Unit = System.Reactive.Unit;
 
 namespace Plot.ViewModels;
 
@@ -57,11 +58,15 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
 
     public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
     
-    private PlotModel BuildPlotModel(IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> fn)
+    private static PlotModel BuildPlotModel(IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> fn)
     {
-        var series = fn.AsParallel().Select(f =>
+        var series = fn.Select(f =>
         {
-            var points = Enumerable.Range(1, 1000)                .Select(x => ConvertToDataPoint(x, f.Item.Invoke(PlotFunctionInvoke(x))));
+            var range = f.Item.DefaultRange.Equals(FSharpOption<IEnumerable<double>>.None)
+                ? Enumerable.Range(-100, 200).Select(x => (double)x)
+                : f.Item.DefaultRange.Value;
+
+            var points = range.Select(x => ConvertToDataPoint(x, f.Item.Function.Invoke(PlotFunctionInvoke(x))));
             var series = new LineSeries();
 
             series.Points.AddRange(points);
@@ -78,12 +83,12 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
         return plot;
     }
 
-    private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(int i)
+    private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(double i)
     {
         return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i), FSharpList<Symbols.SymbolType>.Empty);
     }
 
-    private static DataPoint ConvertToDataPoint(int x, Symbols.SymbolType symbol) => symbol switch
+    private static DataPoint ConvertToDataPoint(double x, Symbols.SymbolType symbol) => symbol switch
     {
         Symbols.SymbolType.Int i => new DataPoint(x, i.Item),
         Symbols.SymbolType.Float f => new DataPoint(x, f.Item),

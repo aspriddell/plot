@@ -72,14 +72,15 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         | TokenType.Identifier name :: tail when symbolTable.ContainsKey(name) -> // symbol lookup
             match symbolTable[name] with
             // check the function is being invoked before invoking it (check for next token being LPar)
-            | SymbolType.PlotScriptFunction (func, _) when List.tryHead tail = Some(TokenType.LPar) -> FnCall (fun (f, _) -> func(f)) tail
+            | SymbolType.PlotScriptFunction fn when List.tryHead tail = Some(TokenType.LPar) -> FnCall (fun (f, _) -> fn.Function(f)) tail
+            | SymbolType.PlotScriptPolynomialFunction fn when List.tryHead tail = Some(TokenType.LPar) -> FnCall (fun (f, _) -> fn.Function(f)) tail
             | _ -> (tail, symbolTable[name])
         | TokenType.Identifier name :: tail when fnContainer.HasFunction(name) -> // function lookup (builtin)
             // same check as above, make sure it's being invoked otherwise return it as a plotscript function (monkey patchable)
             if List.tryHead tail = Some(TokenType.LPar) then
                 FnCall fnContainer.FunctionTable[name] tail
             else
-                (tail, SymbolType.PlotScriptFunction ((fun fnArg -> fnContainer.FunctionTable[name](fnArg, null)), []))
+                (tail, SymbolType.PlotScriptFunction { Function = (fun fnArg -> fnContainer.FunctionTable[name](fnArg, null)); Tokens = None })
         | TokenType.Identifier name :: _ -> raise (VariableError("Variable not found", name))
 
         | TokenType.LInd :: tail -> Array tail []
@@ -144,7 +145,7 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
                 Seq.zip TokenUtils.asciiVariableSequence inputs |> Seq.iter (fun (k, v) -> fnSymbolTable[k] <- v)
                 ParseAndEval(fnTokens, fnSymbolTable, fnContainer) |> Seq.exactlyOne
 
-            let callable = SymbolType.PlotScriptFunction (fnCallback, fnTokens)
+            let callable = SymbolType.PlotScriptFunction { Function = fnCallback; Tokens = Some(fnTokens) }
 
             symbolTable[name] <- callable
             (remaining, callable)
