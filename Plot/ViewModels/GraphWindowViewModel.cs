@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using System.Windows.Input;
 using Microsoft.FSharp.Collections;
 using OxyPlot;
+using OxyPlot.Axes;
 using OxyPlot.Series;
 using Plot.Core;
 using ReactiveUI;
@@ -51,7 +52,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     /// <summary>
     /// The currently available graphing functions.
     /// </summary>
-    public IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphFunctions => _graphFunctions.Value;
+    private IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphFunctions => _graphFunctions.Value;
 
     public ICommand CloseWindow { get; }
 
@@ -62,7 +63,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
         var series = fn.Select(f =>
         {
             var range = f.Item.DefaultRange == null
-                ? Enumerable.Range(-100, 200).Select(x => (double)x)
+                ? Enumerable.Range(-10, 10).Select(x => (double)x)
                 : f.Item.DefaultRange.Value;
 
             var points = range.Select(x => ConvertToDataPoint(x, f.Item.Function.Invoke(PlotFunctionInvoke(x))));
@@ -81,6 +82,16 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
         {
             plot.Series.Add(s);
         }
+
+        plot.Axes.Add(new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            Minimum = -10,
+            Maximum = 10,
+            MajorGridlineStyle = LineStyle.Solid,
+            MinorGridlineStyle = LineStyle.Solid,
+            AxislineStyle = LineStyle.Solid
+        });
 
         return plot;
     }
