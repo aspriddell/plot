@@ -1,6 +1,9 @@
 module Plot.Core.Functions.Calculus
 
 open System
+open System.Collections.Generic
+open System.Linq
+open Microsoft.FSharp.Collections
 open Plot.Core
 open Plot.Core.Symbols
 
@@ -61,11 +64,10 @@ let rec public differentiate (x: SymbolType list) : SymbolType =
 let rec public findRoots (x: SymbolType list) : SymbolType =
     let generateIntervals coeffs step =
         let m = cauchyBound coeffs
-
-        [-(m + 1.0) .. step .. (m + 1.0)]
-        |> Seq.pairwise // pair up values
-        |> Seq.filter (fun (a, b) -> Math.Sign(polyCalc coeffs a) <> Math.Sign(polyCalc coeffs b)) // check for sign change
-        |> Seq.map (fun (a, b) -> (a + b) / 2.0) // use the midpoint of the interval
+        [|-(m + 1.0) .. step .. (m + 1.0)|]
+            |> Array.pairwise
+            |> Array.Parallel.filter (fun (a, b) -> Math.Sign(polyCalc coeffs a) <> Math.Sign(polyCalc coeffs b))
+            |> Array.Parallel.map (fun (a, b) -> (a + b) / 2.0) // use the midpoint of the interval
 
     // https://personal.math.ubc.ca/~anstee/math104/newtonmethod.pdf
     let rec newtonRaphson coeffs coeffs' guess tolerance iterationsLeft =
