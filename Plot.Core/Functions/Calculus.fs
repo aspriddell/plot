@@ -1,8 +1,6 @@
 module Plot.Core.Functions.Calculus
 
 open System
-open System.Collections.Generic
-open System.Linq
 open Microsoft.FSharp.Collections
 open Plot.Core
 open Plot.Core.Symbols
