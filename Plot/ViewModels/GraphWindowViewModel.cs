@@ -22,6 +22,8 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
 {
     private readonly CompositeDisposable _disposable = new();
     private readonly ObservableAsPropertyHelper<PlotModel> _graphModel;
+    private static double _lowerBound = -10;
+    private static double _upperBound = 10;
 
     private readonly ObservableAsPropertyHelper<IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>>
         _graphFunctions;
@@ -41,6 +43,20 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             .ObserveOn(RxApp.MainThreadScheduler)
             .ToProperty(this, x => x.GraphModel, out _graphModel);
 
+        this.WhenAnyValue(x => x.GraphModel)
+            .Where(x => x != null)
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(x =>
+            {
+                x.Axes.Last().AxisChanged += (_, args) =>
+                {
+                    LowerBound += args.DeltaMinimum;
+                    UpperBound += args.DeltaMaximum;
+                };
+            });
+
+        // TODO: Update GraphModel when the bounds change
+
         CloseWindow = ReactiveCommand.CreateFromTask(async () => await CloseWindowInteraction.Handle(Unit.Default));
     }
 
@@ -48,6 +64,18 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     /// The currently displayed <see cref="PlotModel"/>
     /// </summary>
     public PlotModel GraphModel => _graphModel.Value;
+
+    private double LowerBound
+    {
+        get => _lowerBound;
+        set => this.RaiseAndSetIfChanged(ref _lowerBound, value);
+    }
+
+    private double UpperBound
+    {
+        get => _upperBound;
+        set => this.RaiseAndSetIfChanged(ref _upperBound, value);
+    }
 
     /// <summary>
     /// The currently available graphing functions.
@@ -63,7 +91,7 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
         var series = fn.Select(f =>
         {
             var range = f.Item.DefaultRange == null
-                ? Enumerable.Range(-10, 10).Select(x => (double)x)
+                ? Enumerable.Range((int)_lowerBound, (int)(_upperBound - _lowerBound)).Select(x => (double)x)
                 : f.Item.DefaultRange.Value;
 
             var points = range.Select(x => ConvertToDataPoint(x, f.Item.Function.Invoke(PlotFunctionInvoke(x))));
@@ -86,8 +114,8 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
         plot.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
-            Minimum = -10,
-            Maximum = 10,
+            Minimum = (int) _lowerBound,
+            Maximum = (int) _upperBound,
             MajorGridlineStyle = LineStyle.Solid,
             MinorGridlineStyle = LineStyle.Solid,
             AxislineStyle = LineStyle.Solid
