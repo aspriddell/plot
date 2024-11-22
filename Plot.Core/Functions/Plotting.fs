@@ -21,15 +21,13 @@ let public createPlottableFunction (input: SymbolType list, symTable: IDictionar
     // (i.e. a polynomial function has no state and has no tokens to create from)
     | [PlotScriptFunction info] -> PlotScriptGraphingFunction { Function = info.Function; DefaultRange = None }
     | [PlotScriptPolynomialFunction info] ->
-        match findRoots [List(info.Coefficients |> List.map Float)] with
-        | SymbolType.List list ->
-            let values = List.map symbolToFloat list
-            let min = (values |> List.min) * 1.5
-            let max = (values |> List.max) * 1.5
+        let roots = findRoots info.Coefficients 1.0 |> List.ofSeq
 
-            let step = (max - min) / 500.0
-            let points = [min .. step .. max]
+        let min = (roots |> List.min) * 1.5
+        let max = (roots |> List.max) * 1.5
+        let step = (max - min) / 500.0
+        let points = [min .. step .. max]
 
-            PlotScriptGraphingFunction { Function = info.Function; DefaultRange = Some(points |> Seq.ofList) }
-        | _ -> invalidArg "-" "root finding failed"
+        PlotScriptGraphingFunction { Function = info.Function; DefaultRange = Some(points |> Seq.ofList) }
+
     | _ -> invalidArg "function" "plot accepts a single function as the only parameter"
