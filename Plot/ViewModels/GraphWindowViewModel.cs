@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -17,13 +18,42 @@ namespace Plot.ViewModels;
 
 public record PlotFunctionsChangedEvent(
     bool TabChanged,
-    IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> Functions);
+    IReadOnlyCollection<PlotScriptFunctionContainer> Functions);
+
+public class PlotScriptFunctionContainer(Symbols.SymbolType.PlotScriptGraphingFunction function)
+{
+    private readonly ConcurrentDictionary<double, DataPoint> _cache = new();
+
+    public Symbols.SymbolType.PlotScriptGraphingFunction Function => function;
+
+    public IEnumerable<DataPoint> GetPoints(IEnumerable<double> xPoints)
+    {
+        foreach (var x in xPoints)
+        {
+            if (!_cache.TryGetValue(x, out var dataPoint))
+            {
+                var list = FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(x), FSharpList<Symbols.SymbolType>.Empty);
+
+                dataPoint = function.Item.Function.Invoke(list) switch
+                {
+                    Symbols.SymbolType.Float f => new DataPoint(x, f.Item),
+                    Symbols.SymbolType.Int i => new DataPoint(x, i.Item),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                _cache[x] = dataPoint;
+            }
+
+            yield return dataPoint;
+        }
+    }
+}
 
 public class GraphWindowViewModel : ReactiveObject, IDisposable
 {
     private readonly CompositeDisposable _disposable = new();
     private readonly ObservableAsPropertyHelper<(double lower, double upper)?> _currentPlotBounds;
-    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>> _graphFunctions;
+    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<PlotScriptFunctionContainer>> _graphFunctions;
 
     public GraphWindowViewModel()
     {
@@ -99,13 +129,13 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     /// <summary>
     /// The currently available graphing functions.
     /// </summary>
-    private IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> GraphFunctions => _graphFunctions.Value;
+    private IReadOnlyCollection<PlotScriptFunctionContainer> GraphFunctions => _graphFunctions.Value;
 
     public ICommand CloseWindow { get; }
 
     public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
     
-    private static List<LineSeries> BuildPlotSeries((IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>, (double lower, double upper)?) x)
+    private static List<LineSeries> BuildPlotSeries((IReadOnlyCollection<PlotScriptFunctionContainer>, (double lower, double upper)?) x)
     {
         var series = x.Item1.Select(f =>
         {
@@ -120,21 +150,22 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             }
             else
             {
-                range = f.Item.DefaultRange?.Value ?? Utils.generateRange(-10, 10, 0.1);
+                range = f.Function.Item.DefaultRange?.Value ?? Utils.generateRange(-10, 10, 0.1);
             }
 
             var series = new LineSeries();
-            series.Points.AddRange(range.AsParallel().Select(p => ConvertToDataPoint(p, f.Item.Function.Invoke(PlotFunctionInvoke(p)))).OrderBy(x => x.X));
+            series.Points.AddRange(f.GetPoints(range));
 
             return series;
         });
 
         return series.ToList();
     }
-    
+
     private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(double i)
     {
-        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i), FSharpList<Symbols.SymbolType>.Empty);
+        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i),
+            FSharpList<Symbols.SymbolType>.Empty);
     }
 
     private static DataPoint ConvertToDataPoint(double x, Symbols.SymbolType symbol) => symbol switch
