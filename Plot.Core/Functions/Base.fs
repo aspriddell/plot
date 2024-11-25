@@ -78,6 +78,13 @@ let public randInt (x: SymbolType list) : SymbolType =
 
     | _ -> invalidArg "*" "randInt expects between zero and two integer arguments"
 
+[<PlotScriptFunction("fact")>]
+[<PlotScriptFunction("factorial")>]
+let public factorial (x: SymbolType list) : SymbolType =
+    match x with
+    | [ Int i ] -> Int(Seq.fold (*) 1 { 1 .. i })
+    | _ -> invalidArg "*" "factorial expects a single integer argument"
+
 [<PlotScriptFunction("roll")>]
 let public rickRoll (_x: SymbolType list) : SymbolType =
     let processStartInfo =
