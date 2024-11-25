@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
@@ -21,12 +22,8 @@ public record PlotFunctionsChangedEvent(
 public class GraphWindowViewModel : ReactiveObject, IDisposable
 {
     private readonly CompositeDisposable _disposable = new();
-    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<LineSeries>> _series;
-
-    private (double lower, double upper)? _bounds;
-
-    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>>
-        _graphFunctions;
+    private readonly ObservableAsPropertyHelper<(double lower, double upper)?> _currentPlotBounds;
+    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>> _graphFunctions;
 
     public GraphWindowViewModel()
     {
@@ -40,9 +37,9 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
         var yAxis = new LinearAxis
         {
             Position = AxisPosition.Left,
+            AxislineStyle = LineStyle.Solid,
             MajorGridlineStyle = LineStyle.Solid,
-            MinorGridlineStyle = LineStyle.Solid,
-            AxislineStyle = LineStyle.Solid
+            MinorGridlineStyle = LineStyle.LongDash
         };
 
         var xAxis = new LinearAxis
@@ -50,63 +47,29 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             Position = AxisPosition.Bottom,
             Minimum = -10,
             Maximum = 10,
+            AxislineStyle = LineStyle.Solid,
             MajorGridlineStyle = LineStyle.Solid,
-            MinorGridlineStyle = LineStyle.Solid,
-            AxislineStyle = LineStyle.Solid
+            MinorGridlineStyle = LineStyle.LongDash
         };
 
         GraphModel = new PlotModel
         {
             PlotType = PlotType.Cartesian,
-            Axes =
-            {
-                xAxis, yAxis
-            }
+            Axes = { xAxis, yAxis }
         };
 
+#pragma warning disable CS0618 // Type or member is obsolete
         Observable.FromEventPattern<AxisChangedEventArgs>(h => xAxis.AxisChanged += h, h => xAxis.AxisChanged -= h)
+#pragma warning restore CS0618 // Type or member is obsolete
             .Buffer(TimeSpan.FromMilliseconds(25))
-            .Where(x => x.Count > 0)
-            .Select(x =>
-            {
-                var deltaMinSum = x.Sum(e => e.EventArgs.DeltaMinimum);
-                var deltaMaxSum = x.Sum(e => e.EventArgs.DeltaMaximum);
-                return ((Bounds?.lower ?? -10) + deltaMinSum, (Bounds?.upper ?? 10) + deltaMaxSum);
-            })
-            .Subscribe(b => { Bounds = b; });
+            .Select(x => x.Aggregate(Vector2.Zero, (acc, e) => acc + new Vector2((float)e.EventArgs.DeltaMinimum, (float)e.EventArgs.DeltaMaximum)))
+            .Where(acc => acc != Vector2.Zero)
+            .Select(delta => (ValueTuple<double, double>?)((CurrentPlotBounds?.lower ?? -10) + delta.X, (CurrentPlotBounds?.upper ?? 10) + delta.Y))
+            .ToProperty(this, x => x.CurrentPlotBounds, out _currentPlotBounds);
 
-        this.WhenAnyValue(x => x.GraphFunctions, x => x.Bounds)
+        this.WhenAnyValue(x => x.GraphFunctions, x => x.CurrentPlotBounds)
             .Where(x => x.Item1 != null)
-            .Select(x =>
-            {
-                var series = x.Item1.Select(f =>
-                {
-                    IEnumerable<double> range;
-
-                    if (x.Item2.HasValue)
-                    {
-                        var start = x.Item2.Value.lower;
-                        var end = x.Item2.Value.upper;
-
-                        range = Utils.generateRange(start, end, (end - start) / 500d);
-                    }
-                    else
-                    {
-                        range = f.Item.DefaultRange?.Value ?? Utils.generateRange(-10, 10, 0.1);
-                    }
-
-                    var series = new LineSeries();
-                    series.Points.AddRange(range.AsParallel().Select(p => ConvertToDataPoint(p, f.Item.Function.Invoke(PlotFunctionInvoke(p)))).OrderBy(x => x.X));
-
-                    return series;
-                });
-
-                return series.ToList();
-            })
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .ToProperty(this, x => x.Series, out _series);
-
-        this.WhenAnyValue(x => x.Series)
+            .Select(BuildPlotSeries)
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(x =>
             {
@@ -120,7 +83,6 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
                 GraphModel.InvalidatePlot(true);
             });
 
-
         CloseWindow = ReactiveCommand.CreateFromTask(async () => await CloseWindowInteraction.Handle(Unit.Default));
     }
 
@@ -129,13 +91,10 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     /// </summary>
     public PlotModel GraphModel { get; }
 
-    public IReadOnlyCollection<LineSeries> Series => _series.Value;
-
-    private (double lower, double upper)? Bounds
-    {
-        get => _bounds;
-        set => this.RaiseAndSetIfChanged(ref _bounds, value);
-    }
+    /// <summary>
+    /// The upper and lower limits of the current plot (x axis).
+    /// </summary>
+    private (double lower, double upper)? CurrentPlotBounds => _currentPlotBounds.Value;
 
     /// <summary>
     /// The currently available graphing functions.
@@ -145,11 +104,37 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     public ICommand CloseWindow { get; }
 
     public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
+    
+    private static List<LineSeries> BuildPlotSeries((IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>, (double lower, double upper)?) x)
+    {
+        var series = x.Item1.Select(f =>
+        {
+            IEnumerable<double> range;
 
+            if (x.Item2.HasValue)
+            {
+                var start = x.Item2.Value.lower;
+                var end = x.Item2.Value.upper;
+
+                range = Utils.generateRange(start, end, (end - start) / 500d);
+            }
+            else
+            {
+                range = f.Item.DefaultRange?.Value ?? Utils.generateRange(-10, 10, 0.1);
+            }
+
+            var series = new LineSeries();
+            series.Points.AddRange(range.AsParallel().Select(p => ConvertToDataPoint(p, f.Item.Function.Invoke(PlotFunctionInvoke(p)))).OrderBy(x => x.X));
+
+            return series;
+        });
+
+        return series.ToList();
+    }
+    
     private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(double i)
     {
-        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i),
-            FSharpList<Symbols.SymbolType>.Empty);
+        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i), FSharpList<Symbols.SymbolType>.Empty);
     }
 
     private static DataPoint ConvertToDataPoint(double x, Symbols.SymbolType symbol) => symbol switch
