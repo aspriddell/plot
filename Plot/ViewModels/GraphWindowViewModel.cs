@@ -21,9 +21,9 @@ public record PlotFunctionsChangedEvent(
 public class GraphWindowViewModel : ReactiveObject, IDisposable
 {
     private readonly CompositeDisposable _disposable = new();
-    private readonly ObservableAsPropertyHelper<PlotModel> _graphModel;
-    private static double _lowerBound = -10;
-    private static double _upperBound = 10;
+    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<LineSeries>> _series;
+
+    private (double lower, double upper)? _bounds;
 
     private readonly ObservableAsPropertyHelper<IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction>>
         _graphFunctions;
@@ -37,25 +37,84 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
             .ToProperty(this, x => x.GraphFunctions, out _graphFunctions)
             .DisposeWith(_disposable);
 
-        this.WhenAnyValue(x => x.GraphFunctions)
-            .Where(x => x != null)
-            .Select(BuildPlotModel)
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .ToProperty(this, x => x.GraphModel, out _graphModel);
+        var yAxis = new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            MajorGridlineStyle = LineStyle.Solid,
+            MinorGridlineStyle = LineStyle.Solid,
+            AxislineStyle = LineStyle.Solid
+        };
 
-        this.WhenAnyValue(x => x.GraphModel)
-            .Where(x => x != null)
+        var xAxis = new LinearAxis
+        {
+            Position = AxisPosition.Bottom,
+            Minimum = -10,
+            Maximum = 10,
+            MajorGridlineStyle = LineStyle.Solid,
+            MinorGridlineStyle = LineStyle.Solid,
+            AxislineStyle = LineStyle.Solid
+        };
+
+        GraphModel = new PlotModel
+        {
+            PlotType = PlotType.Cartesian,
+            Axes =
+            {
+                xAxis, yAxis
+            }
+        };
+
+        Observable.FromEventPattern<AxisChangedEventArgs>(h => xAxis.AxisChanged += h, h => xAxis.AxisChanged -= h)
+            .Buffer(TimeSpan.FromMilliseconds(25))
+            .Where(x => x.Count > 0)
+            .Select(x =>
+            {
+                var deltaMinSum = x.Sum(e => e.EventArgs.DeltaMinimum);
+                var deltaMaxSum = x.Sum(e => e.EventArgs.DeltaMaximum);
+                return ((Bounds?.lower ?? -10) + deltaMinSum, (Bounds?.upper ?? 10) + deltaMaxSum);
+            })
+            .Subscribe(b => { Bounds = b; });
+
+        this.WhenAnyValue(x => x.GraphFunctions, x => x.Bounds)
+            .Where(x => x.Item1 != null)
+            .Select(x =>
+            {
+                var series = x.Item1.Select(f =>
+                {
+                    var start = (int)(x.Item2?.lower ?? -10);
+                    var end = (int)(x.Item2?.upper ?? 10);
+
+                    var range = f.Item.DefaultRange == null
+                        ? Enumerable.Range(start, end - start).Select(d => (double)d)
+                        : f.Item.DefaultRange.Value;
+
+                    var points = range.Select(p =>
+                        ConvertToDataPoint(p, f.Item.Function.Invoke(PlotFunctionInvoke(p))));
+                    var series = new LineSeries();
+
+                    series.Points.AddRange(points);
+                    return series;
+                });
+
+                return series.ToList();
+            })
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .ToProperty(this, x => x.Series, out _series);
+
+        this.WhenAnyValue(x => x.Series)
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(x =>
             {
-                x.Axes.Last().AxisChanged += (_, args) =>
+                GraphModel.Series.Clear();
+
+                foreach (var s in x ?? [])
                 {
-                    LowerBound += args.DeltaMinimum;
-                    UpperBound += args.DeltaMaximum;
-                };
+                    GraphModel.Series.Add(s);
+                }
+
+                GraphModel.InvalidatePlot(true);
             });
 
-        // TODO: Update GraphModel when the bounds change
 
         CloseWindow = ReactiveCommand.CreateFromTask(async () => await CloseWindowInteraction.Handle(Unit.Default));
     }
@@ -63,18 +122,14 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     /// <summary>
     /// The currently displayed <see cref="PlotModel"/>
     /// </summary>
-    public PlotModel GraphModel => _graphModel.Value;
+    public PlotModel GraphModel { get; }
 
-    private double LowerBound
-    {
-        get => _lowerBound;
-        set => this.RaiseAndSetIfChanged(ref _lowerBound, value);
-    }
+    public IReadOnlyCollection<LineSeries> Series => _series.Value;
 
-    private double UpperBound
+    private (double lower, double upper)? Bounds
     {
-        get => _upperBound;
-        set => this.RaiseAndSetIfChanged(ref _upperBound, value);
+        get => _bounds;
+        set => this.RaiseAndSetIfChanged(ref _bounds, value);
     }
 
     /// <summary>
@@ -85,44 +140,6 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     public ICommand CloseWindow { get; }
 
     public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
-
-    private static PlotModel BuildPlotModel(IReadOnlyCollection<Symbols.SymbolType.PlotScriptGraphingFunction> fn)
-    {
-        var series = fn.Select(f =>
-        {
-            var range = f.Item.DefaultRange == null
-                ? Enumerable.Range((int)_lowerBound, (int)(_upperBound - _lowerBound)).Select(x => (double)x)
-                : f.Item.DefaultRange.Value;
-
-            var points = range.Select(x => ConvertToDataPoint(x, f.Item.Function.Invoke(PlotFunctionInvoke(x))));
-            var series = new LineSeries();
-
-            series.Points.AddRange(points);
-            return series;
-        });
-
-        var plot = new PlotModel
-        {
-            PlotType = PlotType.Cartesian
-        };
-
-        foreach (var s in series)
-        {
-            plot.Series.Add(s);
-        }
-
-        plot.Axes.Add(new LinearAxis
-        {
-            Position = AxisPosition.Left,
-            Minimum = (int) _lowerBound,
-            Maximum = (int) _upperBound,
-            MajorGridlineStyle = LineStyle.Solid,
-            MinorGridlineStyle = LineStyle.Solid,
-            AxislineStyle = LineStyle.Solid
-        });
-
-        return plot;
-    }
 
     private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(double i)
     {
