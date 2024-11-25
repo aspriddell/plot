@@ -13,6 +13,7 @@
     <Compile Include="FunctionContainer.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Lexer.fs" />
+    <Compile Include="Utils.fs" />
   </ItemGroup>
 
   <ItemGroup>
