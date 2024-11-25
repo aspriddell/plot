@@ -23,11 +23,14 @@ let public createPlottableFunction (input: SymbolType list, symTable: IDictionar
     | [PlotScriptPolynomialFunction info] ->
         let roots = findRoots info.Coefficients 1.0 |> List.ofSeq
 
-        let min = (roots |> List.min) * 1.5
-        let max = (roots |> List.max) * 1.5
-        let step = (max - min) / 500.0
-        let points = [min .. step .. max]
+        if List.length roots = 0 then
+            PlotScriptGraphingFunction { Function = info.Function; DefaultRange = None }
+        else
+            let min = (roots |> List.min) * 1.5
+            let max = (roots |> List.max) * 1.5
+            let step = (max - min) / 500.0
+            let points = [min .. step .. max]
 
-        PlotScriptGraphingFunction { Function = info.Function; DefaultRange = Some(points |> Seq.ofList) }
+            PlotScriptGraphingFunction { Function = info.Function; DefaultRange = Some(points |> Seq.ofList) }
 
     | _ -> invalidArg "function" "plot accepts a single function as the only parameter"

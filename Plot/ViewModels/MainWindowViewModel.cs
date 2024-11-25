@@ -177,7 +177,7 @@ public class MainWindowViewModel : ReactiveObject
             return;
         }
 
-        if (OpenEditors.Count == 0 && OpenEditors.Single().SourceDocument.TextLength == 0 && !OpenEditors.Single().Document.IsBackedByFile)
+        if (OpenEditors.Count == 1 && !OpenEditors.Single().IsModified && !OpenEditors.Single().Document.IsBackedByFile)
         {
             OpenEditors.Clear();
         }
@@ -229,7 +229,7 @@ public class MainWindowViewModel : ReactiveObject
 
         OpenEditors.Add(editor);
 
-        if (allowClosingEmpty && !ActiveEditor.IsModified && !ActiveEditor.Document.IsBackedByFile)
+        if (allowClosingEmpty && ActiveEditor?.IsModified != true && ActiveEditor?.Document.IsBackedByFile != true)
         {
             var target = ActiveEditor;
             Task.Delay(350).ContinueWith(_ => OpenEditors.Remove(target));
