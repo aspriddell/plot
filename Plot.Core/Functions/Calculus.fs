@@ -116,7 +116,7 @@ let rec public differentiate (x: SymbolType list) : SymbolType =
         | _ -> performWithOrder (derivativeCalc coeffs, order - 1)
 
     match x with
-    | [ List list ] -> differentiate (list @ [ Int 1 ])
+    | [ List _ ] -> differentiate (x @ [ Int 1 ])
     | [ List list; Int order ] when order > 0 -> List(performWithOrder (list |> List.map symbolToFloat, order) |> List.map Float)
     | _ -> invalidArg "*" "differentiate requires a single list of symbols and an optional, positive integer order"
 
