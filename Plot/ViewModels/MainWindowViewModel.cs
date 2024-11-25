@@ -71,6 +71,7 @@ public class MainWindowViewModel : ReactiveObject
             });
 
         OpenEditors.ToObservableChangeSet()
+            .Delay(TimeSpan.FromMilliseconds(10))
             .Throttle(TimeSpan.FromMilliseconds(25))
             .Subscribe(c =>
             {

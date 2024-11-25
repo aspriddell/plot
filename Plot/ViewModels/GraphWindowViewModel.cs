@@ -88,17 +88,16 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
                         var start = x.Item2.Value.lower;
                         var end = x.Item2.Value.upper;
 
-                        range = Utils.generateRange(start, end, 1);
+                        range = Utils.generateRange(start, end, (end - start) / 500d);
                     }
                     else
                     {
                         range = f.Item.DefaultRange?.Value ?? Utils.generateRange(-10, 10, 0.1);
                     }
 
-                    var points = range.Select(p => ConvertToDataPoint(p, f.Item.Function.Invoke(PlotFunctionInvoke(p))));
                     var series = new LineSeries();
+                    series.Points.AddRange(range.AsParallel().Select(p => ConvertToDataPoint(p, f.Item.Function.Invoke(PlotFunctionInvoke(p)))).OrderBy(x => x.X));
 
-                    series.Points.AddRange(points);
                     return series;
                 });
 
