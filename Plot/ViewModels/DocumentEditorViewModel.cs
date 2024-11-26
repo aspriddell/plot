@@ -47,7 +47,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
 
         this.WhenAnyValue(x => x.LastSavedVersion)
             .CombineLatest(_modificationSignal.StartWith(Guid.Empty)) // used to trigger forced re-evaluations
-            .Throttle(TimeSpan.FromMilliseconds(500))                 // throttle to prevent overly-frequent updates
+            .Throttle(TimeSpan.FromMilliseconds(250))                 // throttle to prevent overly-frequent updates
             .Select(x =>
             {
                 if (x.First != null)

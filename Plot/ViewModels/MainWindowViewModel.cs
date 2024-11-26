@@ -29,7 +29,7 @@ public class MainWindowViewModel : ReactiveObject
     private static readonly FilePickerFileType PlotScriptType = new("PlotScript File")
     {
         AppleUniformTypeIdentifiers = ["moe.ppc.plotscript"],
-        Patterns = ["*.plotscript"],
+        Patterns = [PlotScriptDocument.DefaultFileExtension],
         MimeTypes = ["text/plain"]
     };
 
@@ -204,7 +204,7 @@ public class MainWindowViewModel : ReactiveObject
     {
         var saveDialog = new FilePickerSaveOptions
         {
-            DefaultExtension = ".plotscript",
+            DefaultExtension = PlotScriptDocument.DefaultFileExtension,
             FileTypeChoices = [PlotScriptType]
         };
 
