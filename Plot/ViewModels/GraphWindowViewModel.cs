@@ -1,16 +1,15 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
-using Microsoft.FSharp.Collections;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using Plot.Core;
+using Plot.Models;
 using ReactiveUI;
 using Unit = System.Reactive.Unit;
 
@@ -18,42 +17,13 @@ namespace Plot.ViewModels;
 
 public record PlotFunctionsChangedEvent(
     bool TabChanged,
-    IReadOnlyCollection<PlotScriptFunctionContainer> Functions);
-
-public class PlotScriptFunctionContainer(Symbols.SymbolType.PlotScriptGraphingFunction function)
-{
-    private readonly ConcurrentDictionary<double, DataPoint> _cache = new();
-
-    public Symbols.SymbolType.PlotScriptGraphingFunction Function => function;
-
-    public IEnumerable<DataPoint> GetPoints(IEnumerable<double> xPoints)
-    {
-        foreach (var x in xPoints)
-        {
-            if (!_cache.TryGetValue(x, out var dataPoint))
-            {
-                var list = FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(x), FSharpList<Symbols.SymbolType>.Empty);
-
-                dataPoint = function.Item.Function.Invoke(list) switch
-                {
-                    Symbols.SymbolType.Float f => new DataPoint(x, f.Item),
-                    Symbols.SymbolType.Int i => new DataPoint(x, i.Item),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-                _cache[x] = dataPoint;
-            }
-
-            yield return dataPoint;
-        }
-    }
-}
+    IReadOnlyCollection<PlotScriptGraphFunctionContainer> Functions);
 
 public class GraphWindowViewModel : ReactiveObject, IDisposable
 {
     private readonly CompositeDisposable _disposable = new();
     private readonly ObservableAsPropertyHelper<(double lower, double upper)?> _currentPlotBounds;
-    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<PlotScriptFunctionContainer>> _graphFunctions;
+    private readonly ObservableAsPropertyHelper<IReadOnlyCollection<PlotScriptGraphFunctionContainer>> _graphFunctions;
 
     public GraphWindowViewModel()
     {
@@ -122,20 +92,20 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
     public PlotModel GraphModel { get; }
 
     /// <summary>
-    /// The upper and lower limits of the current plot (x axis).
+    /// The upper and lower limits of the current plot (x-axis).
     /// </summary>
     private (double lower, double upper)? CurrentPlotBounds => _currentPlotBounds.Value;
 
     /// <summary>
     /// The currently available graphing functions.
     /// </summary>
-    private IReadOnlyCollection<PlotScriptFunctionContainer> GraphFunctions => _graphFunctions.Value;
+    private IReadOnlyCollection<PlotScriptGraphFunctionContainer> GraphFunctions => _graphFunctions.Value;
 
     public ICommand CloseWindow { get; }
 
     public Interaction<Unit, Unit> CloseWindowInteraction { get; } = new();
     
-    private static List<LineSeries> BuildPlotSeries((IReadOnlyCollection<PlotScriptFunctionContainer>, (double lower, double upper)?) x)
+    private static List<LineSeries> BuildPlotSeries((IReadOnlyCollection<PlotScriptGraphFunctionContainer>, (double lower, double upper)?) x)
     {
         var series = x.Item1.Select(f =>
         {
@@ -161,19 +131,6 @@ public class GraphWindowViewModel : ReactiveObject, IDisposable
 
         return series.ToList();
     }
-
-    private static FSharpList<Symbols.SymbolType> PlotFunctionInvoke(double i)
-    {
-        return FSharpList<Symbols.SymbolType>.Cons(Symbols.SymbolType.NewFloat(i),
-            FSharpList<Symbols.SymbolType>.Empty);
-    }
-
-    private static DataPoint ConvertToDataPoint(double x, Symbols.SymbolType symbol) => symbol switch
-    {
-        Symbols.SymbolType.Int i => new DataPoint(x, i.Item),
-        Symbols.SymbolType.Float f => new DataPoint(x, f.Item),
-        _ => throw new InvalidOperationException("Unsupported SymbolType")
-    };
 
     public void Dispose()
     {

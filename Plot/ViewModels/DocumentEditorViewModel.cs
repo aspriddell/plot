@@ -22,7 +22,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
     // md5 of the last saved version of the document.
     // it's not great but the change tracker in the TextDocument can't work out if a series of changes amount to nothing
     private byte[] _lastSavedVersion; 
-    private IReadOnlyCollection<PlotScriptFunctionContainer> _graphingFunctions;
+    private IReadOnlyCollection<PlotScriptGraphFunctionContainer> _graphingFunctions;
 
     public DocumentEditorViewModel()
         : this(new PlotScriptDocument())
@@ -80,7 +80,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
     public string FileName => Document.FileName;
     public string TabContent => $"{FileName}{(IsModified ? "*" : string.Empty)}";
 
-    public IReadOnlyCollection<PlotScriptFunctionContainer> GraphingFunctions
+    public IReadOnlyCollection<PlotScriptGraphFunctionContainer> GraphingFunctions
     {
         get => _graphingFunctions;
         private set => this.RaiseAndSetIfChanged(ref _graphingFunctions, value);
@@ -110,7 +110,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
 
             OutputDocument.Insert(OutputDocument.TextLength, $"----- RUN {DateTime.Now:G} -----\n");
 
-            LinkedList<PlotScriptFunctionContainer> graphingFunctionsList = null;
+            LinkedList<PlotScriptGraphFunctionContainer> graphingFunctionsList = null;
 
             foreach (var outputToken in Document.ExecuteScript())
             {
@@ -118,7 +118,7 @@ public class DocumentEditorViewModel : ReactiveObject, IDisposable
                 {
                     case Symbols.SymbolType.PlotScriptGraphingFunction gf:
                         graphingFunctionsList ??= [];
-                        graphingFunctionsList.AddLast(new PlotScriptFunctionContainer(gf));
+                        graphingFunctionsList.AddLast(new PlotScriptGraphFunctionContainer(gf));
                         break;
 
                     default:
