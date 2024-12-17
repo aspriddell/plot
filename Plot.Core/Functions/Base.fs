@@ -5,6 +5,12 @@ open System.Diagnostics
 open Plot.Core
 open Plot.Core.Symbols
 
+let internal unwrap (c: SymbolType) =
+    match c with
+    | Int i -> float i
+    | Float f -> f
+    | _ -> invalidArg "*" "expected a float or int type"
+
 [<PlotScriptFunction("int")>]
 let public castToInt (x: SymbolType list) : SymbolType =
     match x |> Seq.exactlyOne with
@@ -84,6 +90,29 @@ let public factorial (x: SymbolType list) : SymbolType =
     match x with
     | [ Int i ] -> Int(Seq.fold (*) 1 { 1 .. i })
     | _ -> invalidArg "*" "factorial expects a single integer argument"
+
+[<PlotScriptFunction("sqrt")>]    
+let public sqrt (x: SymbolType list) : SymbolType =
+    match x |> Seq.exactlyOne with
+    | Int i -> Float(sqrt(float i))
+    | Float f -> Float(sqrt f)
+    | _ -> invalidArg "*" "sqrt expects a single number argument"
+
+[<PlotScriptFunction("root")>]
+let public root (x: SymbolType list) : SymbolType =
+    match x with
+    | [ Int i; Int r ] -> Float(Math.Pow(float i, 1.0 / float r))
+    | [ Float f; Int r ] -> Float(Math.Pow(f, 1.0 / float r))
+    | [ Int i; Float r ] -> Float(Math.Pow(float i, 1.0 / r))
+    | [ Float f; Float r ] -> Float(Math.Pow(f, 1.0 / r))
+    | _ -> invalidArg "*" "root expects a number and an integer argument"
+
+[<PlotScriptFunction("abs")>]
+let public abs (x: SymbolType list) : SymbolType =
+    match x |> Seq.exactlyOne with
+    | Int i -> Int(abs i)
+    | Float f -> Float(abs f)
+    | _ -> invalidArg "*" "abs expects a single number argument"
 
 [<PlotScriptFunction("roll")>]
 let public rickRoll (_x: SymbolType list) : SymbolType =

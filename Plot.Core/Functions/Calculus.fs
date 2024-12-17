@@ -84,18 +84,12 @@ let private findIntersection (c1: float list) (c2: float list) =
     
     roots |> Seq.map (fun x -> x, polyCalc c1 x)
 
-let internal symbolToFloat (c: SymbolType) =
-    match c with
-    | Int i -> float i
-    | Float f -> f
-    | _ -> invalidArg "*" "expected a float or int type"
-
 [<PlotScriptFunction("polyfn")>]
 [<PlotScriptFunction("polynomial")>]
 let public polyFn (x: SymbolType list) : SymbolType =
     match x with
     | [ List coeffs ] ->
-        let convertedCoeffs = coeffs |> List.map symbolToFloat
+        let convertedCoeffs = coeffs |> List.map Base.unwrap
         let m = cauchyBound convertedCoeffs
         let callback =
             fun (inputs: SymbolType list) ->
@@ -104,7 +98,7 @@ let public polyFn (x: SymbolType list) : SymbolType =
                 | [ Float f ] -> polyCalc convertedCoeffs f |> Float
                 | _ -> invalidArg "*" "expected a single float or int type"
 
-        PlotScriptPolynomialFunction { Function = callback; RealRootRange = (-(m + 1.0), (m + 1.0)); Coefficients = coeffs |> List.map symbolToFloat }
+        PlotScriptPolynomialFunction { Function = callback; RealRootRange = (-(m + 1.0), (m + 1.0)); Coefficients = coeffs |> List.map Base.unwrap }
     | _ -> invalidArg "*" "polyfn requires a single list of coefficients"
 
 [<PlotScriptFunction("diff")>]
@@ -117,11 +111,11 @@ let rec public differentiate (x: SymbolType list) : SymbolType =
 
     match x with
     | [ List _ ] -> differentiate (x @ [ Int 1 ])
-    | [ List list; Int order ] when order > 0 -> List(performWithOrder (list |> List.map symbolToFloat, order) |> List.map Float)
+    | [ List list; Int order ] when order > 0 -> List(performWithOrder (list |> List.map Base.unwrap, order) |> List.map Float)
     | _ -> invalidArg "*" "differentiate requires a single list of symbols and an optional, positive integer order"
 
 [<PlotScriptFunction("solve")>]
-[<PlotScriptFunction("roots")>]
+[<PlotScriptFunction("findRoots")>]
 let rec public solveFunction (x: SymbolType list) : SymbolType =
     match x with
     // handle missing step size
@@ -131,7 +125,7 @@ let rec public solveFunction (x: SymbolType list) : SymbolType =
     // handle incorrect coefficient count
     | [ List list; Float _ ] when List.length list < 2 -> List []
     | [ List list; Float step ] when step > 0 ->
-        findRoots (list |> List.map symbolToFloat) step
+        findRoots (list |> List.map Base.unwrap) step
         |> Seq.map Float
         |> List.ofSeq
         |> List
@@ -142,7 +136,7 @@ let rec public solveFunction (x: SymbolType list) : SymbolType =
 let public intersection (x: SymbolType list) : SymbolType =
     match x with
     | [ List c1; List c2 ] ->
-        findIntersection (c1 |> List.map symbolToFloat) (c2 |> List.map symbolToFloat) 
+        findIntersection (c1 |> List.map Base.unwrap) (c2 |> List.map Base.unwrap) 
         |> Seq.map (fun (x, y) -> List([Float x; Float y]))
         |> List.ofSeq
         |> List

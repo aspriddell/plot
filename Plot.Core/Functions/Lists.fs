@@ -69,3 +69,16 @@ let public listProject (x: SymbolType list) : SymbolType =
     | [List list; PlotScriptPolynomialFunction projection] ->
         list |> List.map (fun i -> projection.Function [i]) |> List
     | _ -> invalidArg "*" "expected a list and an index"
+
+[<PlotScriptFunction("sort")>]
+let public listSort (x: SymbolType list) : SymbolType =
+    match x with
+    | [List list] -> List (List.sortBy Base.unwrap list)
+    | [List list; Int reverse] -> List (List.sortBy Base.unwrap list |> if reverse >= 1 then List.rev else id)
+    | _ -> invalidArg "*" "expected a list argument"
+
+[<PlotScriptFunction("reverse")>]
+let public listReverse (x: SymbolType list) : SymbolType =
+    match x with
+    | [List list] -> List (List.rev list)
+    | _ -> invalidArg "*" "expected a list argument"
