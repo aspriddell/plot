@@ -21,7 +21,7 @@ exception VariableError of message: string * varName: string
 // <Number>         ::= "NumI" <value> | "NumF" <value>
 
 // <FnCall>         ::= <Identifier> "(" <Arguments> ")"
-// <Arguments>      ::= <Expr> ("," <Expr>)* | <empty>
+// <Arguments>      ::= <Expr> ("," <Expr>)* | <Array> ("," <Expr>)* | <empty>
 
 // <Array>          ::= "[" <ArrayElements> "]"
 // <ArrayElements>  ::= <Expr> ("," <Expr>)* | <empty>
@@ -59,7 +59,7 @@ let rec public ParseAndEval (tList: TokenType list, symbolTable: IDictionary<str
         match tList with
         | TokenType.NumI value :: tail -> (tail, SymbolType.Int value)
         | TokenType.NumF value :: tail -> (tail, SymbolType.Float value)
-        
+
         // unary number handling
         | TokenType.Sub :: tail -> let (tLst, tVal) = Base tail
                                    (tLst, negateValue tVal)

@@ -7,16 +7,28 @@ open System
 /// </summary>
 /// <param name="argList">The sequence of tokens to perform splitting on</param>
 let public splitTokenArguments argList =
-    // i.e. a list [NumI(100), Plus, Identifier(x), Comma, NumI(200), Comma, Identifier(a)]
-    // would be split into [[NumI(100), Plus, Identifier(x)], [NumI(200)], [Identifier(a)]]
-    let rec splitArgsInternal acc currentList = function
-        | [] -> acc @ [currentList]
-        | TokenType.Comma :: tail -> splitArgsInternal (acc @ [currentList]) [] tail
-        | x :: tail -> splitArgsInternal acc (currentList @ [x]) tail
-    
+    let rec splitArgsInternal acc currentList depth = function
+        | [] -> if currentList = [] then acc else acc @ [currentList]
+
+        // new argument, non-nested
+        | TokenType.Comma :: tail when depth = 0 -> 
+            if currentList = [] then splitArgsInternal acc [] depth tail
+            else splitArgsInternal (acc @ [currentList]) [] depth tail
+
+        // nested argument
+        | TokenType.LPar :: tail -> splitArgsInternal acc (currentList @ [TokenType.LPar]) (depth + 1) tail
+        | TokenType.RPar :: tail when depth = 1 -> splitArgsInternal (acc @ [currentList @ [TokenType.RPar]]) [] (depth - 1) tail
+        | TokenType.RPar :: tail -> splitArgsInternal acc (currentList @ [TokenType.RPar]) (depth - 1) tail
+
+        // array handling
+        | TokenType.LInd :: tail -> splitArgsInternal acc (currentList @ [TokenType.LInd]) (depth + 1) tail
+        | TokenType.RInd :: tail when depth = 1 -> splitArgsInternal (acc @ [currentList @ [TokenType.RInd]]) [] (depth - 1) tail
+        | TokenType.RInd :: tail -> splitArgsInternal acc (currentList @ [TokenType.RInd]) (depth - 1) tail
+
+        | token :: tail -> splitArgsInternal acc (currentList @ [token]) depth tail
+
     match argList with
-    | TokenType.LPar :: tail when List.last tail = TokenType.RPar ->
-        splitArgsInternal [] [] (tail |> List.take (List.length tail - 1)) // perform padding removal
+    | TokenType.LPar :: tail when List.last tail = TokenType.RPar -> splitArgsInternal [] [] 0 (tail |> List.take (List.length tail - 1))
     | _ -> raise (Exception "LPar/RPar padding not present")
 
 /// <summary>
