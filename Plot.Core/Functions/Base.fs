@@ -88,13 +88,13 @@ let public randInt (x: SymbolType list) : SymbolType =
 [<PlotScriptFunction("factorial")>]
 let public factorial (x: SymbolType list) : SymbolType =
     match x with
-    | [ Int i ] -> Int(Seq.fold (*) 1 { 1 .. i })
+    | [ Int i ] -> Int(Seq.fold (*) 1 { 1..i })
     | _ -> invalidArg "*" "factorial expects a single integer argument"
 
-[<PlotScriptFunction("sqrt")>]    
+[<PlotScriptFunction("sqrt")>]
 let public sqrt (x: SymbolType list) : SymbolType =
     match x |> Seq.exactlyOne with
-    | Int i -> Float(sqrt(float i))
+    | Int i -> Float(sqrt (float i))
     | Float f -> Float(sqrt f)
     | _ -> invalidArg "*" "sqrt expects a single number argument"
 
@@ -113,6 +113,13 @@ let public abs (x: SymbolType list) : SymbolType =
     | Int i -> Int(abs i)
     | Float f -> Float(abs f)
     | _ -> invalidArg "*" "abs expects a single number argument"
+
+[<PlotScriptFunction("round")>]
+let public round (x: SymbolType list) : SymbolType =
+    match x with
+    | [ Float f ] -> Float(Math.Round(f))
+    | [ Float f; Int i ] -> Float(Math.Round(f, i))
+    | _ -> invalidArg "*" "round expects a number and an integer argument"
 
 [<PlotScriptFunction("roll")>]
 let public rickRoll (_x: SymbolType list) : SymbolType =
