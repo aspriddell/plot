@@ -7,6 +7,7 @@ type SymbolType =
     | Int of int
     | Float of double
     | List of SymbolType list
+    | ObjectReference of Object
     | PlotScriptFunction of FunctionInfo
     | PlotScriptGraphingFunction of PlottingFunctionInfo
     | PlotScriptPolynomialFunction of PolynomialFunctionInfo
