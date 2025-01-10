@@ -60,12 +60,35 @@ let public median (x: SymbolType list) : SymbolType =
 let public mode (x: SymbolType list) : SymbolType =
     match x with
     | [ List lst ] -> 
-        let grouped = Seq.map Base.unwrap lst |> Seq.groupBy id // id = self
-        let maxGroupSize = grouped |> Seq.map (fun (_, x) -> Seq.length x) |> Seq.max
-        let matchingGroups = grouped |> Seq.filter (fun (_, x) -> Seq.length x = maxGroupSize)
+        let grouped = Seq.map Base.unwrap lst |> Seq.groupBy id |> Seq.toList // id = self
         
-        List(Seq.map (fun (k, _) -> Float(k)) matchingGroups |> List.ofSeq)
+        if List.length grouped = List.length lst
+        then
+            List([])
+        else 
+            let maxGroupSize = grouped |> Seq.map (fun (_, x) -> Seq.length x) |> Seq.max
+            let matchingGroups = grouped |> Seq.filter (fun (_, x) -> Seq.length x = maxGroupSize)
+            
+            List(Seq.map (fun (k, _) -> Float(k)) matchingGroups |> List.ofSeq)
     | _ -> invalidArg "*" "mode requires a single list of numbers"
+    
+[<PlotScriptFunction("sum")>]
+let public sum (x: SymbolType list) : SymbolType =
+    match x with
+    | [ List lst ] -> Seq.map Base.unwrap lst |> Seq.sum |> Float
+    | _ -> invalidArg "*" "sum requires a single list of numbers"
+
+[<PlotScriptFunction("min")>]
+let public min (x: SymbolType list) : SymbolType =
+    match x with
+    | [ List lst ] -> Seq.map Base.unwrap lst |> Seq.min |> Float
+    | _ -> invalidArg "*" "min requires a single list of numbers"
+
+[<PlotScriptFunction("max")>]
+let public max (x: SymbolType list) : SymbolType =
+    match x with
+    | [ List lst ] -> Seq.map Base.unwrap lst |> Seq.max |> Float
+    | _ -> invalidArg "*" "min requires a single list of numbers"
 
 [<PlotScriptFunction("variance")>]
 let public variance (x: SymbolType list) : SymbolType =
