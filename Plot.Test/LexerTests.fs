@@ -22,7 +22,7 @@ let TestLexerParsing (input: string, tree: TokenType list): unit =
     for token1, token2 in List.zip tokens tree do
         Assert.That(token1, Is.EqualTo(token2))
 
-[<TestCase("10 . 10", typedefof<LexerException>)>]
+[<TestCase("10..10", typedefof<InvalidNumberFormatException>)>]
 [<TestCase("10.10.10", typedefof<InvalidNumberFormatException>)>]
 let TestInvalidSyntaxHandling(input: string, expectedError: Type): unit =
     Assert.Throws(expectedError, fun () -> Parse input |> ignore) |> ignore
