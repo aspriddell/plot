@@ -23,8 +23,8 @@ let internal subValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 -> Int(i1 - i2)
     | Float f1, Float f2 -> Float(f1 - f2)
-    | Int i, Float f
-    | Float f, Int i -> Float(float i - f)
+    | Int i, Float f -> Float(float i - f)
+    | Float f, Int i -> Float(f - float i)
     
     | _ -> invalidOp "Subtraction not defined for the given types"
 
@@ -67,7 +67,7 @@ let internal powValues (v1: SymbolType, v2: SymbolType): SymbolType =
     match v1, v2 with
     | Int i1, Int i2 -> Int(int (float i1 ** float i2))
     | Float f1, Float f2 -> Float(f1 ** f2)
-    | Int i, Float f
-    | Float f, Int i -> Float(float i ** f)
-    
+    | Int i, Float f -> Float(i ** f)
+    | Float f, Int i -> Float(f ** float i)
+
     | _ -> invalidOp "Power operator is only defined for integers and floats"

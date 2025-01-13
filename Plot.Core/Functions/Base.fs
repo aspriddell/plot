@@ -121,6 +121,8 @@ let public round (x: SymbolType list) : SymbolType =
     match x with
     | [ Float f ] -> Float(Math.Round(f))
     | [ Float f; Int i ] -> Float(Math.Round(f, i))
+    | [ Int i ]
+    | [ Int i; Int _ ] -> Int i
     | _ -> invalidArg "*" "round expects a number and an integer argument"
 
 [<PlotScriptFunction("roll")>]
