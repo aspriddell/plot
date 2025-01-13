@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Loader;
@@ -15,14 +16,23 @@ public static class PluginLoader
     /// </summary>
     public static void LoadPlugins(AssemblyLoadContext context, PlotScriptFunctionContainer target)
     {
+#if !DEBUG
+        // app bundles, sandboxing and perms don't work well with plugin loading
+        if (OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+#endif
+
         string[] paths =
         [
-            GetPlatformSpecificRootDir(),
+            Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PlotPlugins"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PlotPlugins")
         ];
 
-        foreach (var pluginFile in paths.Where(Directory.Exists).SelectMany(x => Directory.EnumerateFiles(x, PluginFileTemplate, SearchOption.AllDirectories)))
+        foreach (var pluginFile in paths.Where(Directory.Exists).SelectMany(x =>
+                     Directory.EnumerateFiles(x, PluginFileTemplate, SearchOption.AllDirectories)))
         {
             try
             {
@@ -34,18 +44,5 @@ public static class PluginLoader
                 // not a lot that can be done...
             }
         }
-    }
-
-    private static string GetPlatformSpecificRootDir()
-    {
-#if !DEBUG
-        // macOS uses app bundles, so are three levels up from the executable
-        if (OperatingSystem.IsMacOS())
-        {
-            return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
-        }
-#endif
-        
-        return AppContext.BaseDirectory;
     }
 }
