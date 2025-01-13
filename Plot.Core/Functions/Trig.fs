@@ -1,10 +1,8 @@
 ﻿module Plot.Core.Functions.Trig
 
 open System
-open Plot.Core
 open Plot.Core.Extensibility.Functions
 open Plot.Core.Extensibility.Symbols
-open Plot.Core.Symbols
 
 [<PlotScriptFunction("deg2rad")>]
 let public degToRad (x: SymbolType list) : SymbolType =

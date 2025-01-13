@@ -5,7 +5,6 @@ open Plot.Core
 open Plot.Core.Extensibility.Functions
 open Plot.Core.Extensibility.Symbols
 open Plot.Core.Functions.Calculus
-open Plot.Core.Symbols
 
 [<PlotScriptFunction("plot", InjectSymbolTable = true)>]
 let public createPlottableFunction (input: SymbolType list, symTable: IDictionary<string, SymbolType>) : SymbolType =

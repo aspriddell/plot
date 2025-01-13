@@ -1,9 +1,7 @@
 module Plot.Core.Functions.Stats
 
-open Plot.Core
 open Plot.Core.Extensibility.Functions
 open Plot.Core.Extensibility.Symbols
-open Plot.Core.Symbols
 
 let internal varianceCalc (vals: float list) : float =
     // calculate mean, subtract each value from mean, square and sum

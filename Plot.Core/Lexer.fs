@@ -1,7 +1,6 @@
 ﻿module public Plot.Core.Lexer
 
 open System
-open Plot.Core
 open Plot.Core.Extensibility.Tokens
 
 type LexerException(message: string) =
