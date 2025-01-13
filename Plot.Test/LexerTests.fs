@@ -3,6 +3,7 @@ module Plot.Test.LexerTests
 open System
 open NUnit.Framework
 open Plot.Core
+open Plot.Core.Extensibility.Tokens
 open Plot.Core.Lexer
 
 let LexerTestCases: TestCaseData list =

@@ -3,6 +3,7 @@ module Plot.Test.ParserTests
 open System.Collections.Generic
 open NUnit.Framework
 open Plot.Core
+open Plot.Core.Extensibility.Symbols
 open Plot.Core.Symbols
 
 let ParserTestCases: TestCaseData list = [

@@ -2,6 +2,7 @@
 
 open NUnit.Framework
 open Plot.Core
+open Plot.Core.Extensibility.Tokens
 
 let TokenSplitTestCases: TestCaseData list = [
     TestCaseData([NumI(100); Add; Identifier("x"); Comma; NumI(200); Comma; Identifier("a")], [[NumI(100); Add; Identifier("x")]; [NumI(200)]; [Identifier("a")]])
