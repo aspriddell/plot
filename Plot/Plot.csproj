@@ -28,6 +28,7 @@
     <ItemGroup>
         <TrimmerRootAssembly Include="FluentAvalonia" />
         <TrimmerRootAssembly Include="Plot.Core" />
+        <TrimmerRootAssembly Include="Plot.Core.Abstractions" />
     </ItemGroup>
     
     <ItemGroup>

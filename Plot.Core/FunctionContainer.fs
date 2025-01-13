@@ -7,6 +7,8 @@ open Plot.Core.Extensibility.Functions
 open Plot.Core.Extensibility.Symbols
 
 type public PlotScriptFunctionContainer() =
+    static let defaultContainer = PlotScriptFunctionContainer()
+    
     let functions = Dictionary<string, SymbolType list * IDictionary<string, SymbolType> -> SymbolType>(StringComparer.OrdinalIgnoreCase)
     let processAssembly (assembly: Assembly): unit =
         for method in assembly.GetTypes() |> Seq.collect (_.GetMethods()) |> Seq.filter (_.IsStatic) do
@@ -26,7 +28,7 @@ type public PlotScriptFunctionContainer() =
     /// <summary>
     /// The default instance of the function container.
     /// </summary>
-    static member Default = PlotScriptFunctionContainer()
+    static member Default = defaultContainer;
 
     member this.FunctionTable: IReadOnlyDictionary<string, SymbolType list * IDictionary<string, SymbolType> -> SymbolType> = functions
 

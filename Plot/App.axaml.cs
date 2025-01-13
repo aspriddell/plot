@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Loader;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using Plot.Core;
 using Plot.Models;
 using Plot.ViewModels;
 
@@ -13,6 +15,8 @@ namespace Plot;
 
 public partial class App : Application
 {
+    private AssemblyLoadContext _pluginLoadContext;
+    
     /// <summary>
     /// Transparency level hints passed to windows to enable transparency effects (if supported).
     /// </summary>
@@ -70,6 +74,10 @@ public partial class App : Application
             {
                 LoadFileAsync(desktop.MainWindow.StorageProvider, desktop.Args.First(), vm);
             }
+            
+            // handle plugin loading
+            _pluginLoadContext = new AssemblyLoadContext("PluginLoadContext");
+            PluginLoader.LoadPlugins(_pluginLoadContext, PlotScriptFunctionContainer.Default);
         }
 
         base.OnFrameworkInitializationCompleted();
