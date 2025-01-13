@@ -1,6 +1,8 @@
 ﻿module Plot.Core.Functions.Lists
 
 open Plot.Core
+open Plot.Core.Extensibility.Functions
+open Plot.Core.Extensibility.Symbols
 open Plot.Core.Symbols
 
 [<PlotScriptFunction("append")>]

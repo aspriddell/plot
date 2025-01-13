@@ -1,6 +1,7 @@
 ﻿module Plot.Core.TokenUtils
 
 open System
+open Plot.Core.Extensibility.Tokens
 
 /// <summary>
 /// Splits a list of <see cref="TokenType"/> into statements separated by commas, leaving nested statements intact

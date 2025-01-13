@@ -11,6 +11,7 @@ using AvaloniaEdit.Document;
 using Plot.Core;
 using Plot.Models;
 using ReactiveUI;
+using Symbols = Plot.Core.Extensibility.Symbols;
 
 namespace Plot.ViewModels;
 

@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.FSharp.Collections;
 using OxyPlot;
-using Plot.Core;
+using Symbols = Plot.Core.Extensibility.Symbols;
 
 namespace Plot.Models;
 

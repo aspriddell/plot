@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Microsoft.FSharp.Collections;
 using Plot.Core;
+using Plot.Core.Extensibility.Tokens;
+
+using Symbols = Plot.Core.Extensibility.Symbols;
 
 namespace Plot.Models;
 

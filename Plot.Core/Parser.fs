@@ -2,6 +2,8 @@ module public Plot.Core.Parser
 
 open System.Collections.Generic
 open Plot.Core
+open Plot.Core.Extensibility.Symbols
+open Plot.Core.Extensibility.Tokens
 open Plot.Core.Symbols
 
 exception ParserError of message: string

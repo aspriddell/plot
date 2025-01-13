@@ -9,6 +9,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plot.Core", "Plot.Core\Plot
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plot.Test", "Plot.Test\Plot.Test.fsproj", "{F9667501-9BF4-4BA4-BBAC-122276433C89}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plot.Core.Abstractions", "Plot.Core.Abstractions\Plot.Core.Abstractions.fsproj", "{91834363-CE68-47B1-AA95-30D99FEF922A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{F9667501-9BF4-4BA4-BBAC-122276433C89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9667501-9BF4-4BA4-BBAC-122276433C89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9667501-9BF4-4BA4-BBAC-122276433C89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91834363-CE68-47B1-AA95-30D99FEF922A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91834363-CE68-47B1-AA95-30D99FEF922A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91834363-CE68-47B1-AA95-30D99FEF922A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91834363-CE68-47B1-AA95-30D99FEF922A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

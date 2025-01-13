@@ -2,6 +2,7 @@
 
 open System
 open Plot.Core
+open Plot.Core.Extensibility.Tokens
 
 type LexerException(message: string) =
     inherit Exception(message)

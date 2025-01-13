@@ -3,6 +3,8 @@ module Plot.Core.Functions.Base
 open System
 open System.Diagnostics
 open Plot.Core
+open Plot.Core.Extensibility.Functions
+open Plot.Core.Extensibility.Symbols
 open Plot.Core.Symbols
 
 let internal unwrap (c: SymbolType) =

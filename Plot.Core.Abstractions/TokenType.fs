@@ -1,4 +1,4 @@
-namespace Plot.Core
+namespace Plot.Core.Extensibility.Tokens
 
 type public TokenType =
     | NewLine // newline (\n)

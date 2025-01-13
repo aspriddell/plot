@@ -3,6 +3,8 @@ module Plot.Core.Functions.Calculus
 open System
 open Microsoft.FSharp.Collections
 open Plot.Core
+open Plot.Core.Extensibility.Functions
+open Plot.Core.Extensibility.Symbols
 open Plot.Core.Symbols
 
 

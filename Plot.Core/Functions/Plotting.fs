@@ -2,6 +2,8 @@ module Plot.Core.Functions.Plotting
 
 open System.Collections.Generic
 open Plot.Core
+open Plot.Core.Extensibility.Functions
+open Plot.Core.Extensibility.Symbols
 open Plot.Core.Functions.Calculus
 open Plot.Core.Symbols
 

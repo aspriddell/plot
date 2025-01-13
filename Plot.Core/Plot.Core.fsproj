@@ -7,10 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="TokenType.fs" />
-    <Compile Include="SymbolType.fs" />
-    <Compile Include="TokenUtils.fs" />
     <Compile Include="FunctionContainer.fs" />
+    <Compile Include="SymbolOperations.fs" />
+    <Compile Include="TokenUtils.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Lexer.fs" />
     <Compile Include="Utils.fs" />
@@ -24,6 +23,10 @@
     <Compile Include="Functions\Stats.fs" />
     <Compile Include="Functions\Calculus.fs" />
     <Compile Include="Functions\Plotting.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plot.Core.Abstractions\Plot.Core.Abstractions.fsproj" />
   </ItemGroup>
 
 </Project>

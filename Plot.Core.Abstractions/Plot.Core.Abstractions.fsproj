@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>Plot.Core.Extensibility</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="TokenType.fs"/>
+        <Compile Include="SymbolType.fs"/>
+        <Compile Include="PlotScriptFunction.fs"/>
+    </ItemGroup>
+
+</Project>
